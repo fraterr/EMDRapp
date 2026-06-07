@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'screen-sensory-tastes',
     'screen-sensory-smells',
     'screen-stimulation', // Absolute overlay screen
+    'screen-deep-breath',
     'screen-post-suds',
     'screen-summary',
     'screen-finish'
@@ -54,13 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
     'screen-recall': 15,
     'screen-initial-suds': 25,
     'screen-sensory-images': 35,
-    'screen-sensory-sounds': 45,
-    'screen-sensory-noises': 55,
-    'screen-sensory-tactile': 65,
-    'screen-sensory-tastes': 75,
-    'screen-sensory-smells': 85,
-    'screen-stimulation': 98,
-    'screen-post-suds': 98,
+    'screen-sensory-sounds': 42,
+    'screen-sensory-noises': 49,
+    'screen-sensory-tactile': 56,
+    'screen-sensory-tastes': 63,
+    'screen-sensory-smells': 70,
+    'screen-stimulation': 85,
+    'screen-deep-breath': 92,
+    'screen-post-suds': 96,
     'screen-summary': 99,
     'screen-finish': 100
   };
@@ -163,6 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
       stopBreathingGuide();
     }
 
+    if (screenId === 'screen-deep-breath') {
+      startDeepBreathGuide();
+    } else {
+      stopDeepBreathGuide();
+    }
+
     if (screenId === 'screen-summary') {
       const beforeVal = document.getElementById('summary-before');
       const afterVal = document.getElementById('summary-after');
@@ -212,6 +220,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (breathInterval) {
       clearInterval(breathInterval);
       breathInterval = null;
+    }
+  }
+
+  // --- DEEP BREATH GUIDE SYNCHRONIZER ---
+  let deepBreathInterval = null;
+  function startDeepBreathGuide() {
+    const statusText = document.getElementById('deep-breath-status');
+    if (!statusText) return;
+    
+    let cycle = 0;
+    statusText.textContent = "Inspira";
+    
+    if (deepBreathInterval) clearInterval(deepBreathInterval);
+    deepBreathInterval = setInterval(() => {
+      cycle = (cycle + 1) % 2;
+      if (cycle === 0) {
+        statusText.textContent = "Inspira";
+      } else {
+        statusText.textContent = "Espira";
+      }
+    }, 4000);
+  }
+
+  function stopDeepBreathGuide() {
+    if (deepBreathInterval) {
+      clearInterval(deepBreathInterval);
+      deepBreathInterval = null;
     }
   }
 
@@ -293,37 +328,65 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- BILATERAL STIMULATION EYE-TRACKING ENGINE ---
   function startBilateralStimulation() {
     const overlay = document.getElementById('stim-instruction-overlay');
+    const instructionContent = document.getElementById('stim-instruction-content');
     const countdownEl = document.getElementById('stim-countdown');
+    const startCountdownBtn = document.getElementById('btn-start-countdown');
     const pointerContainer = document.getElementById('emdr-pointer-container');
     const progressBar = document.getElementById('stim-progress-bar');
     
     if (!pointerContainer) return;
 
     // Show overlay and prepare countdown
-    if (overlay && countdownEl) {
+    if (overlay) {
       overlay.style.display = 'flex';
       overlay.style.opacity = '1';
       pointerContainer.style.opacity = '0'; // hide pointer during countdown
       
-      let count = 3;
-      countdownEl.textContent = count;
-      
-      const countInterval = setInterval(() => {
-        count--;
-        if (count > 0) {
+      if (instructionContent) instructionContent.style.display = 'block';
+      if (countdownEl) countdownEl.style.display = 'none';
+
+      const startAction = () => {
+        if (startCountdownBtn) startCountdownBtn.removeEventListener('click', startAction);
+        
+        if (instructionContent) instructionContent.style.display = 'none';
+        if (countdownEl) {
+          countdownEl.style.display = 'block';
+          
+          let count = 3;
           countdownEl.textContent = count;
-        } else if (count === 0) {
-          countdownEl.textContent = "Start";
+          
+          const countInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+              countdownEl.textContent = count;
+            } else if (count === 0) {
+              countdownEl.textContent = "Start";
+            } else {
+              clearInterval(countInterval);
+              overlay.style.opacity = '0';
+              setTimeout(() => {
+                overlay.style.display = 'none';
+                pointerContainer.style.opacity = '1';
+                beginStimulationAnimation(pointerContainer, progressBar);
+              }, 500); // Wait for fade out
+            }
+          }, 1000);
         } else {
-          clearInterval(countInterval);
-          overlay.style.opacity = '0';
-          setTimeout(() => {
-            overlay.style.display = 'none';
-            pointerContainer.style.opacity = '1';
-            beginStimulationAnimation(pointerContainer, progressBar);
-          }, 500); // Wait for fade out
+          overlay.style.display = 'none';
+          pointerContainer.style.opacity = '1';
+          beginStimulationAnimation(pointerContainer, progressBar);
         }
-      }, 1000);
+      };
+
+      if (startCountdownBtn) {
+        // Replace node to clean up any old listeners
+        startCountdownBtn.replaceWith(startCountdownBtn.cloneNode(true));
+        const freshBtn = document.getElementById('btn-start-countdown');
+        freshBtn.addEventListener('click', startAction);
+      } else {
+        // fallback if button isn't found
+        beginStimulationAnimation(pointerContainer, progressBar);
+      }
     } else {
       beginStimulationAnimation(pointerContainer, progressBar);
     }
@@ -427,18 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Play final chime
     playTherapeuticChime();
 
-    // Transition to evaluation screen
+    // Transition to deep breath screen
     setTimeout(() => {
-      // Clear post-suds selections to force a re-evaluation
-      const postGrid = document.getElementById('post-suds-grid');
-      const postBtn = document.getElementById('btn-post-suds-next');
-      const postIndicator = document.getElementById('post-suds-indicator');
-      
-      if (postGrid) postGrid.querySelectorAll('.suds-btn').forEach(b => b.classList.remove('selected'));
-      if (postBtn) postBtn.disabled = true;
-      if (postIndicator) postIndicator.textContent = 'Select your current rating';
-
-      showScreen('screen-post-suds');
+      showScreen('screen-deep-breath');
     }, 600);
   }
 
@@ -639,6 +693,20 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('screen-summary');
   });
 
+  // Deep Breath Continue
+  document.getElementById('btn-deep-breath-continue').addEventListener('click', () => {
+    // Clear post-suds selections to force a re-evaluation
+    const postGrid = document.getElementById('post-suds-grid');
+    const postBtn = document.getElementById('btn-post-suds-next');
+    const postIndicator = document.getElementById('post-suds-indicator');
+    
+    if (postGrid) postGrid.querySelectorAll('.suds-btn').forEach(b => b.classList.remove('selected'));
+    if (postBtn) postBtn.disabled = true;
+    if (postIndicator) postIndicator.textContent = 'Select your current rating';
+
+    showScreen('screen-post-suds');
+  });
+
   // Repeat Session (Start another set)
   document.getElementById('btn-repeat-session').addEventListener('click', () => {
     state.isSubsequentSet = true;
@@ -647,7 +715,8 @@ document.addEventListener('DOMContentLoaded', () => {
     state.initialSuds = state.postSuds;
     state.postSuds = null;
     
-    showScreen('screen-recall');
+    showScreen('screen-stimulation');
+    startBilateralStimulation();
   });
 
   // Finish Session (Log it)
