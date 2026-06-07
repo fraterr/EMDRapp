@@ -230,15 +230,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!statusText) return;
     
     let cycle = 0;
-    statusText.textContent = "Inspira";
+    statusText.textContent = "Inhale";
     
     if (deepBreathInterval) clearInterval(deepBreathInterval);
     deepBreathInterval = setInterval(() => {
       cycle = (cycle + 1) % 2;
       if (cycle === 0) {
-        statusText.textContent = "Inspira";
+        statusText.textContent = "Inhale";
       } else {
-        statusText.textContent = "Espira";
+        statusText.textContent = "Exhale";
       }
     }, 4000);
   }
