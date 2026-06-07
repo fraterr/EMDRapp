@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     'screen-initial-suds',
     'screen-sensory-images',
     'screen-sensory-sounds',
-    'screen-sensory-noises',
     'screen-sensory-tactile',
     'screen-sensory-tastes',
     'screen-sensory-smells',
@@ -55,11 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
     'screen-recall': 15,
     'screen-initial-suds': 25,
     'screen-sensory-images': 35,
-    'screen-sensory-sounds': 42,
-    'screen-sensory-noises': 49,
+    'screen-sensory-sounds': 45,
     'screen-sensory-tactile': 56,
-    'screen-sensory-tastes': 63,
-    'screen-sensory-smells': 70,
+    'screen-sensory-tastes': 65,
+    'screen-sensory-smells': 72,
     'screen-stimulation': 85,
     'screen-deep-breath': 92,
     'screen-post-suds': 96,
@@ -309,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function captureSensoryData() {
     state.sensoryData.images = document.getElementById('input-images').value.trim();
     state.sensoryData.sounds = document.getElementById('input-sounds').value.trim();
-    state.sensoryData.noises = document.getElementById('input-noises').value.trim();
     state.sensoryData.tactile = document.getElementById('input-tactile').value.trim();
     state.sensoryData.tastes = document.getElementById('input-tastes').value.trim();
     state.sensoryData.smells = document.getElementById('input-smells').value.trim();
@@ -318,7 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function resetSensoryInputs() {
     document.getElementById('input-images').value = '';
     document.getElementById('input-sounds').value = '';
-    document.getElementById('input-noises').value = '';
     document.getElementById('input-tactile').value = '';
     document.getElementById('input-tastes').value = '';
     document.getElementById('input-smells').value = '';
@@ -648,21 +644,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-sensory-sounds-next').addEventListener('click', () => {
     captureSensoryData();
-    showScreen('screen-sensory-noises');
-  });
-
-  // Sensory Noises Back & Next
-  document.getElementById('btn-sensory-noises-back').addEventListener('click', () => {
-    showScreen('screen-sensory-sounds');
-  });
-  document.getElementById('btn-sensory-noises-next').addEventListener('click', () => {
-    captureSensoryData();
     showScreen('screen-sensory-tactile');
   });
 
   // Sensory Tactile Back & Next
   document.getElementById('btn-sensory-tactile-back').addEventListener('click', () => {
-    showScreen('screen-sensory-noises');
+    showScreen('screen-sensory-sounds');
   });
   document.getElementById('btn-sensory-tactile-next').addEventListener('click', () => {
     captureSensoryData();
