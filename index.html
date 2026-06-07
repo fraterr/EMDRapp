@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EMDR Guide - Self-Directed Therapy Session</title>
+  <meta name="description" content="A premium, self-guided EMDR session application with interactive eye-movement tracking and sensory recall desensitization.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Ambient glowing blobs -->
+  <div class="glow-orb orb-teal"></div>
+  <div class="glow-orb orb-indigo"></div>
+
+  <div class="app-container" id="app-interface-wrapper">
+    <!-- Header with progress -->
+    <header class="app-header" id="app-header">
+      <h1 class="app-title">EMDR Therapy Guide</h1>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="session-progress"></div>
+      </div>
+    </header>
+
+    <main class="screen-wrapper">
+      
+      <!-- SCREEN 1: Welcome -->
+      <section id="screen-welcome" class="screen card active">
+        <h2>EMDR Healing Session</h2>
+        <p class="description">Eye Movement Desensitization and Reprocessing (EMDR) is a structured therapy that encourages the patient to focus briefly on trauma memories while experiencing bilateral stimulation (typically eye movements), reducing the vividness and emotion associated with the trauma.</p>
+        
+        <div class="info-alert">
+          <div class="info-alert-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <div class="info-alert-text">
+            <strong>Important Notice:</strong> This application serves as a self-help tool. It is not a substitute for professional medical advice, diagnosis, or psychotherapy. Ensure you are in a quiet, safe, and comfortable environment before starting.
+          </div>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-primary" id="btn-welcome-start">Begin Session</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: Recall traumatic event -->
+      <section id="screen-recall" class="screen card">
+        <h2>Bring the Memory to Mind</h2>
+        <p class="description">Close your eyes or focus on the screen. Bring the distressing or traumatic memory to your awareness. Allow the thoughts, feelings, and body sensations associated with this event to arise.</p>
+        
+        <div class="breath-guide-container">
+          <div class="breath-circle">
+            <span class="breath-text" id="breath-status">Breathe</span>
+          </div>
+          <p class="breath-instruction">Breathe slowly and let the memory form clearly in your mind.</p>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-primary" id="btn-recall-focused">I have focused on the memory</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 3: Initial distress rating (SUDS) -->
+      <section id="screen-initial-suds" class="screen card">
+        <h2>Rate Current Distress</h2>
+        <p class="description">Focusing on that memory, rate the intensity of your current emotional distress or pain on a scale from 1 to 10.</p>
+        
+        <div class="suds-grid" id="initial-suds-grid">
+          <button type="button" class="suds-btn" data-value="1">1</button>
+          <button type="button" class="suds-btn" data-value="2">2</button>
+          <button type="button" class="suds-btn" data-value="3">3</button>
+          <button type="button" class="suds-btn" data-value="4">4</button>
+          <button type="button" class="suds-btn" data-value="5">5</button>
+          <button type="button" class="suds-btn" data-value="6">6</button>
+          <button type="button" class="suds-btn" data-value="7">7</button>
+          <button type="button" class="suds-btn" data-value="8">8</button>
+          <button type="button" class="suds-btn" data-value="9">9</button>
+          <button type="button" class="suds-btn" data-value="10">10</button>
+        </div>
+
+        <div class="suds-indicator" id="initial-suds-indicator">Select a distress rating</div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-initial-suds-back">Back</button>
+          <button class="btn btn-primary" id="btn-initial-suds-next" disabled>Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: Sensory - Images -->
+      <section id="screen-sensory-images" class="screen card">
+        <h2>Sensory Details: Images</h2>
+        <p class="description">Focus on the memory. In the box below, describe what images, mental pictures, or visual scenes you see when this traumatic memory is triggered.</p>
+        
+        <div class="form-group">
+          <label class="input-label" for="input-images">Visual Imagery</label>
+          <textarea id="input-images" class="text-input" placeholder="Describe the scene, people, objects, or lights that stand out to you..."></textarea>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-sensory-images-back">Back</button>
+          <button class="btn btn-primary" id="btn-sensory-images-next">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: Sensory - Sounds -->
+      <section id="screen-sensory-sounds" class="screen card">
+        <h2>Sensory Details: Sounds</h2>
+        <p class="description">Focus on the memory. Write down what voices, spoken words, or specific sounds you heard during this traumatic event.</p>
+        
+        <div class="form-group">
+          <label class="input-label" for="input-sounds">Voices &amp; Speech</label>
+          <textarea id="input-sounds" class="text-input" placeholder="Describe what people said, vocal tones, or specific ambient sounds..."></textarea>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-sensory-sounds-back">Back</button>
+          <button class="btn btn-primary" id="btn-sensory-sounds-next">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: Sensory - Noises -->
+      <section id="screen-sensory-noises" class="screen card">
+        <h2>Sensory Details: Noises</h2>
+        <p class="description">Focus on the memory. Describe any sudden noises, background noises, background hums, or sharp sounds associated with the scene.</p>
+        
+        <div class="form-group">
+          <label class="input-label" for="input-noises">Noises &amp; Acoustics</label>
+          <textarea id="input-noises" class="text-input" placeholder="Describe squeaks, engine noises, breaking sounds, or ringing..."></textarea>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-sensory-noises-back">Back</button>
+          <button class="btn btn-primary" id="btn-sensory-noises-next">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 7: Sensory - Tactile -->
+      <section id="screen-sensory-tactile" class="screen card">
+        <h2>Sensory Details: Tactile</h2>
+        <p class="description">Focus on the memory. Describe the physical sensations you felt or now feel in your body (e.g., muscle tension, pressure, temperature, heartbeat, shivering).</p>
+        
+        <div class="form-group">
+          <label class="input-label" for="input-tactile">Physical &amp; Body Sensations</label>
+          <textarea id="input-tactile" class="text-input" placeholder="Describe chest tightness, muscle contraction, hot/cold sensations, touch..."></textarea>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-sensory-tactile-back">Back</button>
+          <button class="btn btn-primary" id="btn-sensory-tactile-next">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 8: Sensory - Tastes (Optional) -->
+      <section id="screen-sensory-tastes" class="screen card">
+        <h2>Sensory Details: Tastes</h2>
+        <p class="description">Focus on the memory. If any, write down what tastes or gustatory sensations you recall. <em>(This step is optional - you can leave it blank)</em>.</p>
+        
+        <div class="form-group">
+          <label class="input-label" for="input-tastes">Taste Sensations (Optional)</label>
+          <textarea id="input-tastes" class="text-input" placeholder="Describe any tastes, metal flavors, dryness, or other sensations in your mouth..."></textarea>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-sensory-tastes-back">Back</button>
+          <button class="btn btn-primary" id="btn-sensory-tastes-next">Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 9: Sensory - Smells -->
+      <section id="screen-sensory-smells" class="screen card">
+        <h2>Sensory Details: Smells</h2>
+        <p class="description">Focus on the memory. Describe what odors, scents, chemical smells, or fragrances are associated with this memory.</p>
+        
+        <div class="form-group">
+          <label class="input-label" for="input-smells">Scent &amp; Odor Details</label>
+          <textarea id="input-smells" class="text-input" placeholder="Describe any scents, exhaust fumes, smoke, ambient smells..."></textarea>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-sensory-smells-back">Back</button>
+          <button class="btn btn-primary" id="btn-sensory-smells-next">Proceed to Stimulation</button>
+        </div>
+      </section>
+
+
+      <!-- SCREEN 12: Post Distress Rating (SUDS) -->
+      <section id="screen-post-suds" class="screen card">
+        <h2>Re-evaluate Distress Level</h2>
+        <p class="description">Take a deep breath and let it go. Bring the traumatic memory back to mind.</p>
+        <p class="description" style="margin-top: -1rem; font-weight: 500; color: var(--text-main);">On a scale from 1 to 10, how intense is your distress or pain right now?</p>
+        
+        <div class="suds-grid" id="post-suds-grid">
+          <button type="button" class="suds-btn" data-value="1">1</button>
+          <button type="button" class="suds-btn" data-value="2">2</button>
+          <button type="button" class="suds-btn" data-value="3">3</button>
+          <button type="button" class="suds-btn" data-value="4">4</button>
+          <button type="button" class="suds-btn" data-value="5">5</button>
+          <button type="button" class="suds-btn" data-value="6">6</button>
+          <button type="button" class="suds-btn" data-value="7">7</button>
+          <button type="button" class="suds-btn" data-value="8">8</button>
+          <button type="button" class="suds-btn" data-value="9">9</button>
+          <button type="button" class="suds-btn" data-value="10">10</button>
+        </div>
+
+        <div class="suds-indicator" id="post-suds-indicator">Select your current rating</div>
+
+        <div class="btn-container">
+          <button class="btn btn-primary" id="btn-post-suds-next" disabled>Continue</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 13: Summary -->
+      <section id="screen-summary" class="screen card">
+        <h2>Distress Level Summary</h2>
+        <p class="description">Here is the comparison of your distress level before and after this stimulation set.</p>
+        
+        <div class="comparison-card">
+          <div class="comparison-point">
+            <div class="comparison-label">Before</div>
+            <div class="comparison-value value-before" id="summary-before">-</div>
+          </div>
+          <div class="comparison-arrow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <div class="comparison-point">
+            <div class="comparison-label">After</div>
+            <div class="comparison-value value-after" id="summary-after">-</div>
+          </div>
+        </div>
+
+        <p class="description" style="color: var(--text-main); font-weight: 500;" id="summary-text-feedback">Excellent progress. Would you like to perform another set of bilateral eye movement tracking to decrease the distress level further?</p>
+
+        <div class="btn-container" style="flex-direction: column; gap: 0.75rem;">
+          <button class="btn btn-primary" id="btn-repeat-session" style="width: 100%;">Yes, start another set</button>
+          <button class="btn btn-secondary" id="btn-finish-session" style="width: 100%;">No, complete session</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 14: Finish & Log History -->
+      <section id="screen-finish" class="screen card">
+        <h2>Session Concluded</h2>
+        <p class="description">Thank you for completing this EMDR desensitization session. Processing traumatic memories can be heavy. Be gentle with yourself, drink water, and allow any remaining thoughts to pass without judgment.</p>
+        
+        <div class="history-section">
+          <h3 class="history-title">Session History Logs</h3>
+          <div class="history-list" id="history-log-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-primary" id="btn-restart-app">Start A New Session</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- SCREEN 11: FULL VIEWPORT BLACK BILATERAL STIMULATION -->
+  <section id="screen-stimulation" class="screen-stimulation">
+    <!-- Instruction Overlay -->
+    <div class="stim-instruction-overlay" id="stim-instruction-overlay">
+      <h2>Prepare for Eye Tracking</h2>
+      <p>Keep your head still and follow the indicator with <strong>only your eyes</strong>.</p>
+      <div id="stim-countdown" class="stim-countdown">3</div>
+    </div>
+
+    <!-- Progress Indicator at the top -->
+    <div class="stim-progress" id="stim-progress-bar"></div>
+    
+    <!-- Tracking Indicator (Moving Finger Image) -->
+    <div class="emdr-pointer-container" id="emdr-pointer-container">
+      <img src="assets/index_finger.png" alt="Index Finger" class="emdr-pointer" style="width: 160px; height: auto; object-fit: contain;">
+    </div>
+
+    <!-- Skip/Pause instructions overlay -->
+    <div class="stim-skip-hint" id="stim-skip-hint">Click anywhere to complete early</div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
