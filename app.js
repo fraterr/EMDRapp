@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     playTherapeuticChime();
 
     // Load user settings (defaults since prep screen was removed)
-    const speedRangeVal = 3;
+    const speedRangeVal = 4.5;
     const variationMode = 'dynamic';
     const soundSetting = 'enabled';
     
