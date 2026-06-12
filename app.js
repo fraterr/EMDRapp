@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bilateral stimulation config
     stimulation: {
       startTime: 0,
-      durationMs: 60000, // 1 minute
+      durationMs: 90000, // 1.5 minutes
       animationFrameId: null,
       baseSpeed: 3, // 1 to 5
       variationMode: 'dynamic', // dynamic, wave, constant
@@ -406,9 +406,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset pointer container scale/style
     pointerContainer.style.left = '50%';
+    pointerContainer.style.top = '50%';
 
     // Animation physics variables
-    let angle = 0; // Tracks the phase of the sinusoidal left-right oscillation
+    let angle = 0; // Tracks the phase of the sinusoidal oscillation (sin(angle) goes from -1 to 1)
+    let prevSin = 0; // Tracks previous sine value to detect center crossings
+    let theta = 0; // Current diagonal trajectory angle in radians (0 is horizontal)
     const screenPadding = 60; // Keep the finger icon inside the screen edges
 
     function updateFrame(timestamp) {
@@ -457,17 +460,46 @@ document.addEventListener('DOMContentLoaded', () => {
       // Using deltaTime to prevent frame-rate physics dependency
       angle += currentFrequency * 16.67; // Approx 60fps frame delta
 
-      // Sinusoidal factor mapping: oscillates smoothly between 0 and 1
-      // Standard sin(x) goes from -1 to 1.
-      const factor = (Math.sin(angle) + 1) / 2;
+      const currentSin = Math.sin(angle);
 
-      // Calculate pixel coordinate on screen
+      // Detect center crossing (sign change of sine, when finger passes the center of the screen)
+      // We check prevSin !== 0 to prevent a double trigger or trigger on the first frame.
+      if (Math.sign(currentSin) !== Math.sign(prevSin) && prevSin !== 0) {
+        // Choose a new random diagonal angle. 
+        // We limit theta to [-Math.PI / 3, Math.PI / 3] to keep a prominent horizontal 
+        // tracking component (lateral desensitization), which is the standard for EMDR,
+        // while introducing dynamic diagonal variations.
+        theta = (Math.random() * 2 - 1) * (Math.PI / 3);
+      }
+      prevSin = currentSin;
+
+      // Position along the diagonal axis defined by theta
       const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+
       const minX = screenPadding;
       const maxX = screenWidth - screenPadding - 160; // subtracting finger width (160px)
-      const targetX = minX + (maxX - minX) * factor;
+      const minY = screenPadding;
+      const maxY = screenHeight - screenPadding - 160; // subtracting finger height (160px)
+
+      // Safe bounds to prevent negative ranges on tiny viewports
+      const safeMaxX = Math.max(maxX, minX + 10);
+      const safeMaxY = Math.max(maxY, minY + 10);
+
+      const centerX = minX + (safeMaxX - minX) / 2;
+      const centerY = minY + (safeMaxY - minY) / 2;
+
+      const rangeX = (safeMaxX - minX) / 2;
+      const rangeY = (safeMaxY - minY) / 2;
+
+      // factor oscillates smoothly between -1 and 1
+      const factor = currentSin;
+
+      const targetX = centerX + rangeX * factor * Math.cos(theta);
+      const targetY = centerY + rangeY * factor * Math.sin(theta);
 
       pointerContainer.style.left = `${targetX}px`;
+      pointerContainer.style.top = `${targetY}px`;
 
       state.stimulation.animationFrameId = requestAnimationFrame(updateFrame);
     }
