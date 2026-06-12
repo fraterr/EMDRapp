@@ -264,16 +264,96 @@
   <section id="screen-stimulation" class="screen-stimulation">
     <!-- Instruction Overlay -->
     <div class="stim-instruction-overlay" id="stim-instruction-overlay">
-      <div id="stim-instruction-content" style="max-width: 500px; margin: 0 auto; text-align: center;">
-        <h2>Prepare for Eye Tracking</h2>
-        <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Keep your head still and follow the moving indicator with <strong>only your eyes</strong>.</p>
-        
-        <div class="fullscreen-tip" style="margin: 1.5rem 0; padding: 1.25rem; background: rgba(45, 212, 191, 0.08); border: 1px dashed var(--accent-teal); border-radius: 12px; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0;">
+      <div id="stim-instruction-content" style="max-width: 820px; margin: 0 auto; width: 100%;">
+        <div class="stim-instruction-grid">
+          <!-- Text column -->
+          <div class="stim-instruction-text">
+            <h2>Prepare for Bilateral Stimulation</h2>
+            <p class="subtitle">During this eye-tracking session, you will also perform the <strong>Butterfly Hug</strong> for enhanced bilateral stimulation.</p>
+            
+            <div class="instruction-steps">
+              <div class="step-item">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                  <strong>Track the indicator:</strong> Keep your head still and follow the moving pointer on the screen using <strong>only your eyes</strong>.
+                </div>
+              </div>
+              <div class="step-item">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                  <strong>Cross your arms:</strong> Cross your arms over your chest, placing your hands on your shoulders or upper arms, and interlock your thumbs to form a butterfly shape.
+                </div>
+              </div>
+              <div class="step-item">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                  <strong>Tap alternately:</strong> Gently tap your hands on your shoulders alternately (left hand, then right hand) at a slow, steady pace while tracking the pointer.
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Animation column -->
+          <div class="stim-instruction-visual">
+            <div class="butterfly-animation-container">
+              <svg class="butterfly-hug-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="body-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="rgba(129, 140, 248, 0.1)" />
+                    <stop offset="100%" stop-color="rgba(45, 212, 191, 0.1)" />
+                  </linearGradient>
+                  <linearGradient id="hand-left-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#818cf8" />
+                    <stop offset="100%" stop-color="#4f46e5" />
+                  </linearGradient>
+                  <linearGradient id="hand-right-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#2dd4bf" />
+                    <stop offset="100%" stop-color="#0d9488" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Torso Outline -->
+                <path d="M 60,160 C 60,110 80,105 100,105 C 120,105 140,110 140,160" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="3" stroke-linecap="round" />
+                <circle cx="100" cy="70" r="22" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="3" />
+                <path d="M 94,92 L 94,105 M 106,92 L 106,105" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="3" />
+
+                <!-- Crossed Arms -->
+                <path d="M 60,130 Q 85,160 115,135" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="4" stroke-linecap="round" />
+                <path d="M 140,130 Q 115,160 85,135" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="4" stroke-linecap="round" />
+
+                <!-- Left Hand (On user's right chest/shoulder area) -->
+                <g class="butterfly-hand left-hand" transform-origin="115 125">
+                  <path d="M 115,125 C 125,120 140,100 145,115 C 150,130 130,135 115,125 Z" fill="url(#hand-left-grad)" opacity="0.85" />
+                  <path d="M 118,122 C 128,110 138,103 141,114" fill="none" stroke="rgba(255, 255, 255, 0.3)" stroke-width="2" />
+                  <path d="M 118,122 C 130,118 138,114 139,122" fill="none" stroke="rgba(255, 255, 255, 0.3)" stroke-width="2" />
+                  <path d="M 118,122 C 128,124 134,124 133,128" fill="none" stroke="rgba(255, 255, 255, 0.3)" stroke-width="2" />
+                  <circle class="ripple" cx="130" cy="120" r="15" fill="none" stroke="var(--accent-indigo)" stroke-width="2" opacity="0" />
+                </g>
+
+                <!-- Right Hand (On user's left chest/shoulder area) -->
+                <g class="butterfly-hand right-hand" transform-origin="85 125">
+                  <path d="M 85,125 C 75,120 60,100 55,115 C 50,130 70,135 85,125 Z" fill="url(#hand-right-grad)" opacity="0.85" />
+                  <path d="M 82,122 C 72,110 62,103 59,114" fill="none" stroke="rgba(255, 255, 255, 0.3)" stroke-width="2" />
+                  <path d="M 82,122 C 70,118 62,114 61,122" fill="none" stroke="rgba(255, 255, 255, 0.3)" stroke-width="2" />
+                  <path d="M 82,122 C 72,124 66,124 67,128" fill="none" stroke="rgba(255, 255, 255, 0.3)" stroke-width="2" />
+                  <circle class="ripple" cx="70" cy="120" r="15" fill="none" stroke="var(--accent-teal)" stroke-width="2" opacity="0" />
+                </g>
+                
+                <!-- Interlocked Thumbs -->
+                <path d="M 92,128 C 96,120 104,120 108,128" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="3" stroke-linecap="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="fullscreen-tip" style="margin: 1.5rem auto 1rem; max-width: 600px; padding: 1.25rem; background: rgba(45, 212, 191, 0.08); border: 1px dashed var(--accent-teal); border-radius: 12px; font-size: 0.95rem; line-height: 1.5; color: #e2e8f0; text-align: center;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px; display: inline-block;"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
           To maximize the effectiveness of the session, press the <strong>F11</strong> key on your keyboard to enter fullscreen mode (on Chrome and Firefox).
         </div>
         
-        <button class="btn btn-primary" id="btn-start-countdown" style="margin-top: 1rem; width: 100%; max-width: 240px;">Start Exercise</button>
+        <div style="text-align: center; margin-top: 1rem;">
+          <button class="btn btn-primary" id="btn-start-countdown" style="width: 100%; max-width: 240px;">Start Exercise</button>
+        </div>
       </div>
       <div id="stim-countdown" class="stim-countdown" style="display: none;">3</div>
     </div>
