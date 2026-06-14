@@ -50,6 +50,16 @@
           </div>
         </div>
 
+        <div class="advanced-mode-toggle" style="margin: 1.5rem 0; padding: 1rem; background: rgba(45, 212, 191, 0.05); border-radius: 8px; border: 1px solid rgba(45, 212, 191, 0.2);">
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="checkbox" id="advanced-mode-checkbox" style="margin-right: 12px; width: 1.2rem; height: 1.2rem; accent-color: var(--accent-teal);">
+            <span style="font-weight: 500; font-size: 1.1rem; color: var(--text-main);">Advanced Mode</span>
+          </label>
+          <p class="description" style="margin-top: 0.5rem; font-size: 0.9rem; margin-left: 31px; margin-bottom: 0;">
+            Enable detailed sensory perception questions (images, sounds, feelings, tastes, smells) to deeply explore the mental image.
+          </p>
+        </div>
+
         <div class="btn-container">
           <button class="btn btn-primary" id="btn-welcome-start">Begin Session</button>
         </div>
@@ -167,23 +177,143 @@
 
         <div class="btn-container">
           <button class="btn btn-secondary" id="btn-sensory-smells-back">Back</button>
-          <button class="btn btn-primary" id="btn-sensory-smells-next">Proceed to Stimulation</button>
+          <button class="btn btn-primary" id="btn-sensory-smells-next">Proceed to TFT Focus</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 9.2: TFT Mind-Body Focus -->
+      <section id="screen-tft-focus" class="screen card">
+        <h2>TFT: Mind &amp; Body Focus</h2>
+        <p class="description">Visualize the distressing scene mentally and hold it firmly in your mind. At the same time, scan your body and notice where you feel the physical sensation of the negative emotion (e.g. chest tightness, throat constriction, stomach distress). Keep your focus on both the image and the bodily sensation.</p>
+        
+        <div class="breath-guide-container">
+          <div class="breath-circle tft-focus-pulse">
+            <span class="breath-text" id="tft-focus-status">Focus</span>
+          </div>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-tft-focus-back">Back</button>
+          <button class="btn btn-primary" id="btn-tft-focus-next">Continue to Tapping</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 9.4: EFT Tapping Guide -->
+      <section id="screen-eft-tapping" class="screen card">
+        <h2>EFT Tapping Sequence</h2>
+        <p class="description">Tap each point 15 times on your body at your own pace while keeping the distressing memory and sensation active in your awareness. Click or hover over any point in the list below to see its location and instructions.</p>
+
+        <!-- EFT technique instructions -->
+        <div class="info-alert" style="margin-top: 1rem; margin-bottom: 1.5rem; background: rgba(45, 212, 191, 0.06); border: 1px solid rgba(45, 212, 191, 0.2);">
+          <div class="info-alert-icon" style="color: var(--accent-teal);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <div class="info-alert-text">
+            <strong>Tapping Technique:</strong> To perform the tapping, join your <strong>thumb, index, and middle fingers together</strong>, and tap each point gently on your body.
+          </div>
+        </div>
+
+        <div class="tapping-workspace">
+          <!-- Left: EFT Point Image Illustration -->
+          <div class="tapping-visual-container">
+            <img id="tapping-point-image" src="assets/EFT points/karate chop.jpg" alt="Karate Chop (KC)" class="tft-tapping-image">
+          </div>
+          <!-- Right: Info Panel & Sequence Checklist -->
+          <div class="tapping-info-panel">
+            <div class="tapping-tutorial-details">
+              <h3 id="tapping-point-name">Karate Chop (KC)</h3>
+              <p id="tapping-point-desc" class="tapping-point-description">Tap the outer edge of your hand, in the fleshy part below the pinky finger.</p>
+            </div>
+            
+            <div class="tapping-sequence-list-container">
+              <h4 class="tapping-list-title">Tapping Sequence Order</h4>
+              <ul class="tapping-sequence-list" id="tapping-sequence-list">
+                <li class="seq-item active" data-point-id="kc">1. Karate Chop (KC)</li>
+                <li class="seq-item" data-point-id="th">2. Top of Head (TH)</li>
+                <li class="seq-item" data-point-id="eb">3. Eyebrow (EB)</li>
+                <li class="seq-item" data-point-id="se">4. Side of Eye (SE)</li>
+                <li class="seq-item" data-point-id="ue">5. Under Eye (UE)</li>
+                <li class="seq-item" data-point-id="un">6. Under Nose (UN)</li>
+                <li class="seq-item" data-point-id="ch">7. Chin Point (Ch)</li>
+                <li class="seq-item" data-point-id="cb">8. Collarbone (CB)</li>
+                <li class="seq-item" data-point-id="ua">9. Under Arm (UA)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-container">
+          <button class="btn btn-secondary" id="btn-eft-tapping-back">Back</button>
+          <button class="btn btn-primary" id="btn-eft-tapping-next" style="flex-grow: 1;">Continue to 9 Gamut</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 9.5: 9 Gamut Procedure -->
+      <section id="screen-9-gamut" class="screen card">
+        <h2>TFT: 9 Gamut Procedure</h2>
+        <p class="description">Continuously tap the <strong>Gamut point</strong> (the back of your hand between the knuckles of your ring finger and pinky finger) while completing the following 9 steps:</p>
+        
+        <div class="instruction-steps" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+          <div class="step-item"><span class="step-number">1</span><div class="step-content">Open your eyes.</div></div>
+          <div class="step-item"><span class="step-number">2</span><div class="step-content">Close your eyes.</div></div>
+          <div class="step-item"><span class="step-number">3</span><div class="step-content">Open your eyes and look down to the left (keeping your head still).</div></div>
+          <div class="step-item"><span class="step-number">4</span><div class="step-content">Look down to the right (keeping your head still).</div></div>
+          <div class="step-item"><span class="step-number">5</span><div class="step-content">Roll your eyes in a full circle.</div></div>
+          <div class="step-item"><span class="step-number">6</span><div class="step-content">Roll your eyes in a full circle in the opposite direction.</div></div>
+          <div class="step-item"><span class="step-number">7</span><div class="step-content">Hum aloud a few notes of any tune (e.g., "Happy Birthday").</div></div>
+          <div class="step-item"><span class="step-number">8</span><div class="step-content">Count aloud from 1 to 5, then backwards from 5 to 1.</div></div>
+          <div class="step-item"><span class="step-number">9</span><div class="step-content">Hum the tune again.</div></div>
+        </div>
+
+        <div class="btn-container" style="margin-top: 2rem;">
+          <button class="btn btn-secondary" id="btn-9-gamut-back">Back</button>
+          <button class="btn btn-primary" id="btn-9-gamut-next" style="flex-grow: 1;">Start EMDR Session</button>
         </div>
       </section>
 
       <!-- SCREEN 11.5: Deep Breath -->
       <section id="screen-deep-breath" class="screen card">
         <h2>Take a Deep Breath</h2>
-        <p class="description">The tracking set is complete. Now, take a very deep breath (as deep as possible). Hold it for a moment, and then exhale slowly, releasing any remaining tension.</p>
+        <p class="description">The tracking set is complete. Now, take 3 deep breaths following this timing: Inhale for 4 seconds, Hold for 4 seconds, and Exhale for 8 seconds, releasing any remaining tension.</p>
         
         <div class="breath-guide-container">
-          <div class="breath-circle">
-            <span class="breath-text" id="deep-breath-status">Inhale</span>
+          <div class="breath-circle deep-breath-pulse">
+            <span class="breath-text deep-breath-text-pulse" id="deep-breath-status">Inhale</span>
           </div>
         </div>
 
         <div class="btn-container">
-          <button class="btn btn-primary" id="btn-deep-breath-continue">Continue to Rating</button>
+          <button class="btn btn-primary" id="btn-deep-breath-continue">Clear Mental Image</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 11.8: NLP Submodalities Erasing -->
+      <section id="screen-nlp" class="screen card">
+        <h2>NLP: Erase the Memory</h2>
+        <p class="description" id="nlp-instruction">Bring the distressing scene back into your mind's eye. Using your own mental imagination, visualize the scene and mentally transform it, stripping away all colors until it is completely black and white.</p>
+
+        <div class="nlp-workspace-container">
+          <div class="nlp-view-box" id="nlp-view-box">
+            <!-- Memory Projection Card -->
+            <div class="nlp-memory-projection" id="nlp-memory-projection">
+              <div class="nlp-memory-scene" id="nlp-memory-scene"></div>
+            </div>
+            <!-- Canvas for eraser particles & void starfield -->
+            <canvas id="nlp-canvas" class="nlp-particle-canvas"></canvas>
+            
+            <!-- Floating Eraser Cursor/Icon -->
+            <div class="nlp-eraser-indicator" id="nlp-eraser-indicator" style="display: none; background: transparent; border: none; padding: 0; box-shadow: none;">
+              <img src="assets/eraser.png" alt="Eraser" style="height: 48px; width: auto; display: block; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));">
+            </div>
+          </div>
+        </div>
+
+        <div class="nlp-controls-container">
+          <button class="btn btn-primary" id="btn-nlp-next-step" style="width: 100%;">I have turned it Black &amp; White</button>
+        </div>
+
+        <div class="btn-container" id="nlp-navigation-buttons" style="display: none; width: 100%;">
+          <button class="btn btn-primary" id="btn-nlp-finish" style="width: 100%;">Proceed to Evaluation</button>
         </div>
       </section>
 
@@ -247,6 +377,7 @@
         
         <div class="history-section">
           <h3 class="history-title">Session History Logs</h3>
+          <div class="history-chart-container" id="history-chart-container"></div>
           <div class="history-list" id="history-log-list">
             <!-- Dynamically populated -->
           </div>

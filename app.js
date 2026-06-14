@@ -28,7 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
       soundEnabled: true,
       isRunning: false
     },
-    history: []
+    history: [],
+    // TFT Tapping state
+    tft: {
+      activePointIndex: 0,
+      tapCount: 0,
+      isPlaying: false,
+      intervalId: null,
+      pulseIntervalMs: 650
+    },
+    // NLP state
+    nlp: {
+      currentState: 'color'
+    },
+    advancedMode: false
   };
 
   // --- SCREEN FLOW DEFINITION ---
@@ -41,8 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
     'screen-sensory-tactile',
     'screen-sensory-tastes',
     'screen-sensory-smells',
+    'screen-tft-focus',
+    'screen-eft-tapping',
+    'screen-9-gamut',
     'screen-stimulation', // Absolute overlay screen
     'screen-deep-breath',
+    'screen-nlp',
     'screen-post-suds',
     'screen-summary',
     'screen-finish'
@@ -51,16 +68,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Map screens to progress percentages (0 - 100)
   const screenProgress = {
     'screen-welcome': 5,
-    'screen-recall': 15,
-    'screen-initial-suds': 25,
-    'screen-sensory-images': 35,
-    'screen-sensory-sounds': 45,
-    'screen-sensory-tactile': 56,
-    'screen-sensory-tastes': 65,
-    'screen-sensory-smells': 72,
-    'screen-stimulation': 85,
-    'screen-deep-breath': 92,
-    'screen-post-suds': 96,
+    'screen-recall': 12,
+    'screen-initial-suds': 20,
+    'screen-sensory-images': 28,
+    'screen-sensory-sounds': 36,
+    'screen-sensory-tactile': 44,
+    'screen-sensory-tastes': 50,
+    'screen-sensory-smells': 56,
+    'screen-tft-focus': 62,
+    'screen-eft-tapping': 70,
+    'screen-9-gamut': 75,
+    'screen-stimulation': 80,
+    'screen-deep-breath': 88,
+    'screen-nlp': 94,
+    'screen-post-suds': 97,
     'screen-summary': 99,
     'screen-finish': 100
   };
@@ -163,6 +184,79 @@ document.addEventListener('DOMContentLoaded', () => {
       stopBreathingGuide();
     }
 
+    if (screenId === 'screen-tft-focus') {
+      const tftNextBtn = document.getElementById('btn-tft-focus-next');
+      if (tftNextBtn) {
+        if (!state.advancedMode && !state.isSubsequentSet && state.initialSuds === null) {
+          tftNextBtn.textContent = "Evaluate Distress";
+        } else {
+          tftNextBtn.textContent = "Continue to Tapping";
+        }
+      }
+    }
+
+    if (screenId === 'screen-eft-tapping') {
+      startEftTapping();
+    } else {
+      stopEftTapping();
+    }
+
+    if (screenId === 'screen-nlp') {
+      // Reset NLP state
+      state.nlp.currentState = 'color';
+      
+      const nlpInstruction = document.getElementById('nlp-instruction');
+      if (nlpInstruction) {
+        nlpInstruction.textContent = "Bring the distressing scene back into your mind's eye. Using your own mental imagination, visualize the scene and mentally transform it, stripping away all colors until it is completely black and white.";
+      }
+
+      const projection = document.getElementById('nlp-memory-projection');
+      if (projection) {
+        projection.style.display = 'flex';
+        projection.classList.remove('grayscale-fade', 'shrink-to-rice');
+      }
+
+      // Restart the scene animation cleanly
+      const scene = document.getElementById('nlp-memory-scene');
+      if (scene) {
+        scene.style.display = 'block';
+        scene.style.opacity = '1';
+        scene.classList.remove('scene-shrinking', 'scene-erasing');
+        scene.style.animation = 'none';
+        scene.offsetHeight; // force reflow
+        scene.style.animation = '';
+      }
+
+      const viewBox = document.getElementById('nlp-view-box');
+      if (viewBox) {
+        viewBox.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+      }
+
+      const stepBtn = document.getElementById('btn-nlp-next-step');
+      if (stepBtn) {
+        stepBtn.style.display = 'block';
+        stepBtn.textContent = "I have turned it Black & White";
+      }
+
+      const navButtons = document.getElementById('nlp-navigation-buttons');
+      if (navButtons) {
+        navButtons.style.display = 'none';
+      }
+
+      const eraser = document.getElementById('nlp-eraser-indicator');
+      if (eraser) {
+        eraser.style.display = 'none';
+        eraser.classList.remove('auto-sweep');
+      }
+
+      setupNlpCanvas();
+    } else {
+      if (nlpAnimationId) {
+        cancelAnimationFrame(nlpAnimationId);
+        nlpAnimationId = null;
+      }
+    }
+
     if (screenId === 'screen-deep-breath') {
       startDeepBreathGuide();
     } else {
@@ -221,30 +315,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- DEEP BREATH GUIDE SYNCHRONIZER ---
-  let deepBreathInterval = null;
+  // --- DEEP BREATH GUIDE SYNCHRONIZER (4-4-8 cycle) ---
+  let deepBreathTimer = null;
   function startDeepBreathGuide() {
     const statusText = document.getElementById('deep-breath-status');
     if (!statusText) return;
     
-    let cycle = 0;
+    let seconds = 0;
     statusText.textContent = "Inhale";
     
-    if (deepBreathInterval) clearInterval(deepBreathInterval);
-    deepBreathInterval = setInterval(() => {
-      cycle = (cycle + 1) % 2;
-      if (cycle === 0) {
+    if (deepBreathTimer) clearInterval(deepBreathTimer);
+    deepBreathTimer = setInterval(() => {
+      seconds = (seconds + 1) % 16;
+      if (seconds === 0) {
         statusText.textContent = "Inhale";
-      } else {
+      } else if (seconds === 4) {
+        statusText.textContent = "Hold";
+      } else if (seconds === 8) {
         statusText.textContent = "Exhale";
       }
-    }, 4000);
+    }, 1000);
   }
 
   function stopDeepBreathGuide() {
-    if (deepBreathInterval) {
-      clearInterval(deepBreathInterval);
-      deepBreathInterval = null;
+    if (deepBreathTimer) {
+      clearInterval(deepBreathTimer);
+      deepBreathTimer = null;
     }
   }
 
@@ -302,6 +398,282 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupSudsButtons('initial-suds-grid', 'btn-initial-suds-next', 'initial-suds-indicator', 'initial');
   setupSudsButtons('post-suds-grid', 'btn-post-suds-next', 'post-suds-indicator', 'post');
+
+  // --- EFT TAPPING ENGINE & CONSTANTS ---
+  const eftPoints = [
+    { id: 'kc', name: 'Karate Chop (KC)', desc: 'Tap the outer edge of your hand, in the fleshy part below the pinky finger.', img: 'assets/EFT points/karate chop.jpg' },
+    { id: 'th', name: 'Top of Head (TH)', desc: 'Tap the crown / center of the top of your head with your fingertips.', img: 'assets/EFT points/Top head.jpg' },
+    { id: 'eb', name: 'Eyebrow (EB)', desc: 'Tap the inner edge of your eyebrows, near where they meet the bridge of your nose.', img: 'assets/EFT points/eyebrows.jpg' },
+    { id: 'se', name: 'Side of Eye (SE)', desc: 'Tap the bone at the outer side of your eyes, near the temple.', img: 'assets/EFT points/side eye.jpg' },
+    { id: 'ue', name: 'Under Eye (UE)', desc: 'Tap the bone directly under your eyes, centered beneath your pupil.', img: 'assets/EFT points/under eye.jpg' },
+    { id: 'un', name: 'Under Nose (UN)', desc: 'Tap the small crease between the bottom of your nose and your upper lip.', img: 'assets/EFT points/under nose.jpg' },
+    { id: 'ch', name: 'Chin Point (Ch)', desc: 'Tap the horizontal crease between your lower lip and the point of your chin.', img: 'assets/EFT points/chin point.jpg' },
+    { id: 'cb', name: 'Collarbone (CB)', desc: 'Tap about one inch down and out from the U-shaped notch at the base of your throat.', img: 'assets/EFT points/collarbone.jpg' },
+    { id: 'ua', name: 'Under Arm (UA)', desc: 'Tap about four inches below your armpit, on the side of your body (at bra-strap height).', img: 'assets/EFT points/under arm.jpg' }
+  ];
+
+  function selectTappingPoint(pointId) {
+    const pIdx = eftPoints.findIndex(p => p.id === pointId);
+    if (pIdx === -1) return;
+    
+    state.tft.activePointIndex = pIdx;
+    
+    // Update active illustration image with a quick fade transition
+    const point = eftPoints[pIdx];
+    const imgEl = document.getElementById('tapping-point-image');
+    if (imgEl) {
+      imgEl.style.opacity = '0';
+      setTimeout(() => {
+        imgEl.src = point.img;
+        imgEl.alt = point.name;
+        imgEl.style.opacity = '1';
+      }, 120);
+    }
+    
+    // Update details panel text
+    const nameEl = document.getElementById('tapping-point-name');
+    const descEl = document.getElementById('tapping-point-desc');
+    if (nameEl) nameEl.textContent = point.name;
+    if (descEl) descEl.textContent = point.desc;
+    
+    // Update sequence list highlights
+    const listItems = document.querySelectorAll('.seq-item');
+    listItems.forEach(item => {
+      item.classList.remove('active');
+      if (item.dataset.pointId === pointId) {
+        item.classList.add('active');
+      }
+    });
+  }
+
+  function startEftTapping() {
+    selectTappingPoint('kc');
+  }
+
+  // Obsolete - kept for layout compatibility
+  function stopEftTapping() {
+  }
+
+  // Bind the sequence checklist item hover and click events
+  function initTappingListListeners() {
+    const listItems = document.querySelectorAll('.seq-item');
+    listItems.forEach(item => {
+      item.addEventListener('click', () => {
+        selectTappingPoint(item.dataset.pointId);
+      });
+      item.addEventListener('mouseenter', () => {
+        selectTappingPoint(item.dataset.pointId);
+      });
+    });
+  }
+
+  // --- NLP SUBMODALITIES ENGINE ---
+  let nlpCtx = null;
+  let nlpAnimationId = null;
+  const nlpParticles = [];
+  const nlpStars = [];
+
+  class NlpParticle {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 5;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.radius = 1 + Math.random() * 3;
+      this.color = `hsla(${200 + Math.random() * 80}, 90%, 70%, ${0.7 + Math.random() * 0.3})`;
+      this.alpha = 1;
+      this.decay = 0.01 + Math.random() * 0.02;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.alpha -= this.decay;
+    }
+    draw(ctx) {
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = this.color;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  class NlpStar {
+    constructor(width, height) {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.radius = 0.5 + Math.random() * 1.5;
+      this.alpha = 0.1 + Math.random() * 0.8;
+      this.speed = 0.005 + Math.random() * 0.015;
+      this.glow = Math.random() > 0.5;
+    }
+    update() {
+      this.alpha += this.speed;
+      if (this.alpha > 0.95 || this.alpha < 0.05) {
+        this.speed = -this.speed;
+      }
+    }
+    draw(ctx) {
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      if (this.glow) {
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = '#ffffff';
+      }
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function setupNlpCanvas() {
+    const canvas = document.getElementById('nlp-canvas');
+    if (!canvas) return;
+    
+    nlpCtx = canvas.getContext('2d');
+    
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    nlpStars.length = 0;
+    for (let i = 0; i < 40; i++) {
+      nlpStars.push(new NlpStar(canvas.width, canvas.height));
+    }
+    
+    nlpParticles.length = 0;
+    
+    if (nlpAnimationId) {
+      cancelAnimationFrame(nlpAnimationId);
+    }
+    
+    animateNlpCanvas();
+  }
+
+  function animateNlpCanvas() {
+    if (!nlpCtx) return;
+    
+    const canvas = document.getElementById('nlp-canvas');
+    if (!canvas) return;
+    
+    nlpCtx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (state.nlp.currentState === 'void' || state.nlp.currentState === 'erase') {
+      nlpStars.forEach(star => {
+        star.update();
+        star.draw(nlpCtx);
+      });
+    }
+    
+    for (let i = nlpParticles.length - 1; i >= 0; i--) {
+      const p = nlpParticles[i];
+      p.update();
+      if (p.alpha <= 0) {
+        nlpParticles.splice(i, 1);
+      } else {
+        p.draw(nlpCtx);
+      }
+    }
+    
+    nlpAnimationId = requestAnimationFrame(animateNlpCanvas);
+  }
+
+  function initNlpListeners() {
+    const canvas = document.getElementById('nlp-canvas');
+    const viewBox = document.getElementById('nlp-view-box');
+    const eraser = document.getElementById('nlp-eraser-indicator');
+    
+    if (!canvas || !viewBox || !eraser) return;
+    
+    const handleMove = (e) => {
+      if (state.nlp.currentState !== 'erase') return;
+      
+      const rect = canvas.getBoundingClientRect();
+      let clientX, clientY;
+      
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      
+      eraser.style.left = `${x}px`;
+      eraser.style.top = `${y}px`;
+      
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const dist = Math.hypot(x - centerX, y - centerY);
+      
+      if (dist < 18) {
+        triggerNlpErasure(centerX, centerY);
+      }
+    };
+    
+    viewBox.addEventListener('mouseenter', () => {
+      if (state.nlp.currentState === 'erase') {
+        eraser.style.display = 'flex';
+      }
+    });
+    
+    viewBox.addEventListener('mouseleave', () => {
+      eraser.style.display = 'none';
+    });
+    
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('touchmove', handleMove, { passive: true });
+    
+    canvas.addEventListener('touchstart', (e) => {
+      if (state.nlp.currentState === 'erase') {
+        eraser.style.display = 'flex';
+        handleMove(e);
+      }
+    }, { passive: true });
+  }
+
+  function triggerNlpErasure(cx, cy) {
+    state.nlp.currentState = 'void';
+    
+    const projection = document.getElementById('nlp-memory-projection');
+    const eraser = document.getElementById('nlp-eraser-indicator');
+    if (projection) projection.style.display = 'none';
+    if (eraser) eraser.style.display = 'none';
+    
+    playTherapeuticChime();
+    
+    for (let i = 0; i < 70; i++) {
+      nlpParticles.push(new NlpParticle(cx, cy));
+    }
+    
+    const nlpInstruction = document.getElementById('nlp-instruction');
+    if (nlpInstruction) {
+      nlpInstruction.textContent = "The image is dissolved. Only an infinite, peaceful space remains. Rest in this calm void.";
+    }
+    
+    const viewBox = document.getElementById('nlp-view-box');
+    if (viewBox) {
+      viewBox.style.backgroundColor = '#000000';
+    }
+    
+    setTimeout(() => {
+      const navButtons = document.getElementById('nlp-navigation-buttons');
+      if (navButtons) {
+        navButtons.style.display = 'flex';
+      }
+    }, 2500);
+  }
 
   // --- INPUT RETRIEVAL SYSTEM ---
   function captureSensoryData() {
@@ -579,6 +951,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(e);
     }
 
+    // Call chart renderer
+    renderHistoryChart();
+
     if (historyArray.length === 0) {
       listEl.innerHTML = '<div class="history-empty">No logged sessions yet. Completed sessions will show up here.</div>';
       return;
@@ -623,13 +998,153 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function renderHistoryChart() {
+    const chartContainer = document.getElementById('history-chart-container');
+    if (!chartContainer) return;
+
+    // Load history
+    let historyArray = [];
+    try {
+      const stored = localStorage.getItem('emdr_session_history');
+      historyArray = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (historyArray.length === 0) {
+      chartContainer.style.display = 'none';
+      return;
+    }
+
+    chartContainer.style.display = 'flex';
+
+    // Reverse history to show chronological order (oldest to newest)
+    const reversedHistory = [...historyArray].reverse();
+    const total = reversedHistory.length;
+
+    // SVG Settings
+    const svgWidth = 500;
+    const svgHeight = 160;
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 };
+    const chartWidth = svgWidth - padding.left - padding.right;
+    const chartHeight = svgHeight - padding.top - padding.bottom;
+
+    // Coordinate mapping functions
+    const getY = (val) => {
+      // Map scale 1-10 to Y pixel coords (10 is top, 1 is bottom)
+      return padding.top + ((10 - val) * chartHeight / 9);
+    };
+
+    const getX = (idx) => {
+      if (total <= 1) {
+        return padding.left + chartWidth / 2;
+      }
+      return padding.left + (idx * chartWidth / (total - 1));
+    };
+
+    // 1. Grid Levels (1, 5, 10)
+    const gridLevels = [1, 5, 10];
+    let gridHtml = '';
+    gridLevels.forEach(level => {
+      const y = getY(level);
+      gridHtml += `
+        <line class="chart-grid-line" x1="${padding.left}" y1="${y}" x2="${svgWidth - padding.right}" y2="${y}"></line>
+        <text class="chart-axis-text" x="${padding.left - 10}" y="${y + 4}" text-anchor="end">${level}</text>
+      `;
+    });
+
+    // 2. Connector Lines (stress reduction visualization)
+    let connectorsHtml = '';
+    reversedHistory.forEach((session, i) => {
+      const x = getX(i);
+      const yInitial = getY(session.initial);
+      const yFinal = getY(session.final);
+      connectorsHtml += `
+        <line class="chart-reduction-connector" x1="${x}" y1="${yInitial}" x2="${x}" y2="${yFinal}"></line>
+      `;
+    });
+
+    // 3. Path Data for Line Lines
+    let initialPathData = '';
+    let finalPathData = '';
+    reversedHistory.forEach((session, i) => {
+      const x = getX(i);
+      const yInitial = getY(session.initial);
+      const yFinal = getY(session.final);
+
+      if (i === 0) {
+        initialPathData += `M ${x} ${yInitial}`;
+        finalPathData += `M ${x} ${yFinal}`;
+      } else {
+        initialPathData += ` L ${x} ${yInitial}`;
+        finalPathData += ` L ${x} ${yFinal}`;
+      }
+    });
+
+    // 4. Dot points for user sessions
+    let dotsHtml = '';
+    reversedHistory.forEach((session, i) => {
+      const x = getX(i);
+      const yInitial = getY(session.initial);
+      const yFinal = getY(session.final);
+      
+      const formattedDate = session.date || 'Unknown Date';
+      const tooltipInitial = `Session ${i + 1} (${formattedDate}): Initial SUDS = ${session.initial}`;
+      const tooltipFinal = `Session ${i + 1} (${formattedDate}): Final SUDS = ${session.final}`;
+
+      dotsHtml += `
+        <circle class="chart-dot-initial" cx="${x}" cy="${yInitial}" r="4" data-tooltip="${tooltipInitial}">
+          <title>${tooltipInitial}</title>
+        </circle>
+        <circle class="chart-dot-final" cx="${x}" cy="${yFinal}" r="4" data-tooltip="${tooltipFinal}">
+          <title>${tooltipFinal}</title>
+        </circle>
+      `;
+    });
+
+    // Assemble SVG HTML Content
+    chartContainer.innerHTML = `
+      <svg class="history-chart-svg" viewBox="0 0 ${svgWidth} ${svgHeight}">
+        <!-- Grid Levels -->
+        ${gridHtml}
+        
+        <!-- Connector Lines -->
+        ${connectorsHtml}
+        
+        <!-- Lines (only if we have more than 1 data point) -->
+        ${total > 1 ? `<path class="chart-line-initial" d="${initialPathData}"></path>` : ''}
+        ${total > 1 ? `<path class="chart-line-final" d="${finalPathData}"></path>` : ''}
+        
+        <!-- Dots -->
+        ${dotsHtml}
+      </svg>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-color legend-initial"></div>
+          <span>Initial SUDS</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color legend-final"></div>
+          <span>Final SUDS</span>
+        </div>
+      </div>
+    `;
+  }
+
   // --- BUTTON EVENT ROUTING ---
   
-  // Welcome -> Recall
+  // Welcome -> Recall / TFT Focus
   document.getElementById('btn-welcome-start').addEventListener('click', () => {
     state.isSubsequentSet = false;
+    const advCb = document.getElementById('advanced-mode-checkbox');
+    state.advancedMode = advCb ? advCb.checked : false;
     resetSensoryInputs();
-    showScreen('screen-recall');
+    
+    if (state.advancedMode) {
+      showScreen('screen-recall');
+    } else {
+      showScreen('screen-tft-focus');
+    }
   });
 
   // Recall -> SUDS
@@ -648,16 +1163,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial SUDS Back & Next
   document.getElementById('btn-initial-suds-back').addEventListener('click', () => {
-    showScreen('screen-recall');
+    if (state.advancedMode) {
+      showScreen('screen-recall');
+    } else {
+      showScreen('screen-tft-focus');
+    }
   });
   
   document.getElementById('btn-initial-suds-next').addEventListener('click', () => {
-    // If it is a subsequent set (repeat loop), skip the sensory detailing pages
     if (state.isSubsequentSet) {
-      showScreen('screen-stimulation');
-      startBilateralStimulation();
-    } else {
+      showScreen('screen-tft-focus');
+    } else if (state.advancedMode) {
       showScreen('screen-sensory-images');
+    } else {
+      showScreen('screen-eft-tapping');
     }
   });
 
@@ -703,17 +1222,125 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-sensory-smells-next').addEventListener('click', () => {
     captureSensoryData();
+    showScreen('screen-tft-focus');
+  });
+
+  // TFT Focus Back & Next
+  document.getElementById('btn-tft-focus-back').addEventListener('click', () => {
+    if (state.isSubsequentSet) {
+      showScreen('screen-summary');
+    } else if (state.advancedMode) {
+      showScreen('screen-sensory-smells');
+    } else {
+      showScreen('screen-welcome');
+    }
+  });
+  document.getElementById('btn-tft-focus-next').addEventListener('click', () => {
+    if (state.isSubsequentSet || state.advancedMode) {
+      showScreen('screen-eft-tapping');
+    } else {
+      // In basic mode, first evaluation happens after TFT Focus
+      if (state.initialSuds === null) {
+        // Reset SUDS buttons selection
+        const initGrid = document.getElementById('initial-suds-grid');
+        const initBtn = document.getElementById('btn-initial-suds-next');
+        const initIndicator = document.getElementById('initial-suds-indicator');
+        
+        if (initGrid) initGrid.querySelectorAll('.suds-btn').forEach(b => b.classList.remove('selected'));
+        if (initBtn) initBtn.disabled = true;
+        if (initIndicator) initIndicator.textContent = 'Select a distress rating';
+        
+        showScreen('screen-initial-suds');
+      } else {
+        showScreen('screen-eft-tapping');
+      }
+    }
+  });
+
+  // EFT Tapping Back & Next
+  document.getElementById('btn-eft-tapping-back').addEventListener('click', () => {
+    if (state.isSubsequentSet || state.advancedMode) {
+      showScreen('screen-tft-focus');
+    } else {
+      showScreen('screen-initial-suds');
+    }
+  });
+  document.getElementById('btn-eft-tapping-next').addEventListener('click', () => {
+    showScreen('screen-9-gamut');
+  });
+
+  // 9 Gamut Back & Next
+  document.getElementById('btn-9-gamut-back').addEventListener('click', () => {
+    showScreen('screen-eft-tapping');
+  });
+  document.getElementById('btn-9-gamut-next').addEventListener('click', () => {
     showScreen('screen-stimulation');
     startBilateralStimulation();
   });
 
-  // Post SUDS Continue
-  document.getElementById('btn-post-suds-next').addEventListener('click', () => {
-    showScreen('screen-summary');
+  // Deep Breath Continue -> NLP
+  document.getElementById('btn-deep-breath-continue').addEventListener('click', () => {
+    showScreen('screen-nlp');
   });
 
-  // Deep Breath Continue
-  document.getElementById('btn-deep-breath-continue').addEventListener('click', () => {
+  // NLP Interactive Flow Next Step
+  document.getElementById('btn-nlp-next-step').addEventListener('click', () => {
+    if (state.nlp.currentState === 'color') {
+      state.nlp.currentState = 'grayscale';
+      
+      const projection = document.getElementById('nlp-memory-projection');
+      if (projection) projection.classList.add('grayscale-fade');
+
+      // Switch scene animation from color-fade to shrinking
+      const scene = document.getElementById('nlp-memory-scene');
+      if (scene) {
+        scene.classList.add('scene-shrinking');
+      }
+      
+      const instruction = document.getElementById('nlp-instruction');
+      if (instruction) {
+        instruction.textContent = "Now, through your mental focus, imagine shrinking the black and white image. Picture it moving further away, getting smaller and smaller until it is just a tiny, harmless dot.";
+      }
+      
+      const nextBtn = document.getElementById('btn-nlp-next-step');
+      if (nextBtn) nextBtn.textContent = "I have shrunk it to a dot";
+      
+    } else if (state.nlp.currentState === 'grayscale') {
+      state.nlp.currentState = 'erase';
+      
+      // Fix scene as small grayscale image with fade-out animation
+      const scene = document.getElementById('nlp-memory-scene');
+      if (scene) {
+        scene.classList.remove('scene-shrinking');
+        scene.classList.add('scene-erasing');
+      }
+      
+      const instruction = document.getElementById('nlp-instruction');
+      if (instruction) {
+        instruction.textContent = "Now imagine a large eraser sweeping across this small image, wiping it away completely as it passes...";
+      }
+      
+      const nextBtn = document.getElementById('btn-nlp-next-step');
+      if (nextBtn) nextBtn.style.display = 'none';
+      
+      // Show eraser with automatic sweep animation
+      const eraser = document.getElementById('nlp-eraser-indicator');
+      if (eraser) {
+        eraser.classList.add('auto-sweep');
+      }
+      
+      // After the sweep animation completes, trigger dissolution
+      setTimeout(() => {
+        const canvas = document.getElementById('nlp-canvas');
+        if (canvas && state.nlp.currentState === 'erase') {
+          triggerNlpErasure(canvas.width / 2, canvas.height / 2);
+        }
+      }, 7000);
+    }
+  });
+
+  // NLP Finish -> Post SUDS
+  document.getElementById('btn-nlp-finish').addEventListener('click', () => {
     // Clear post-suds selections to force a re-evaluation
     const postGrid = document.getElementById('post-suds-grid');
     const postBtn = document.getElementById('btn-post-suds-next');
@@ -726,6 +1353,11 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('screen-post-suds');
   });
 
+  // Post SUDS Continue
+  document.getElementById('btn-post-suds-next').addEventListener('click', () => {
+    showScreen('screen-summary');
+  });
+
   // Repeat Session (Start another set)
   document.getElementById('btn-repeat-session').addEventListener('click', () => {
     state.isSubsequentSet = true;
@@ -734,8 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.initialSuds = state.postSuds;
     state.postSuds = null;
     
-    showScreen('screen-stimulation');
-    startBilateralStimulation();
+    showScreen('screen-tft-focus');
   });
 
   // Finish Session (Log it)
@@ -748,10 +1379,15 @@ document.addEventListener('DOMContentLoaded', () => {
     state.isSubsequentSet = false;
     state.initialSuds = null;
     state.postSuds = null;
+    state.advancedMode = false;
+    const advCb = document.getElementById('advanced-mode-checkbox');
+    if(advCb) advCb.checked = false;
     resetSensoryInputs();
     showScreen('screen-welcome');
   });
 
-  // Initialize History display immediately
+  // Initialize display and listeners immediately
   renderHistoryList();
+  initTappingListListeners();
+  initNlpListeners();
 });

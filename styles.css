@@ -698,6 +698,122 @@ textarea.text-input::placeholder {
   font-style: italic;
 }
 
+/* Historical SUDS Chart Styling */
+.history-chart-container {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  margin-bottom: 1.5rem;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.history-chart-svg {
+  width: 100%;
+  height: 180px;
+  overflow: visible;
+}
+
+/* SVG Chart Elements */
+.chart-grid-line {
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+}
+
+.chart-axis-text {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  fill: var(--text-muted);
+  user-select: none;
+}
+
+.chart-line-initial {
+  fill: none;
+  stroke: var(--accent-indigo);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--accent-indigo-glow));
+}
+
+.chart-line-final {
+  fill: none;
+  stroke: var(--accent-teal);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.25));
+}
+
+.chart-reduction-connector {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-dasharray: 2 2;
+  stroke-width: 1;
+}
+
+.chart-dot-initial {
+  fill: var(--bg-dark);
+  stroke: var(--accent-indigo);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: transform 0.2s, r 0.2s, fill 0.2s;
+}
+
+.chart-dot-initial:hover {
+  fill: var(--accent-indigo);
+  r: 6;
+}
+
+.chart-dot-final {
+  fill: var(--bg-dark);
+  stroke: var(--accent-teal);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: transform 0.2s, r 0.2s, fill 0.2s;
+}
+
+.chart-dot-final:hover {
+  fill: var(--accent-teal);
+  r: 6;
+}
+
+/* Legend Styling */
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-initial {
+  background: var(--accent-indigo);
+  box-shadow: 0 0 6px var(--accent-indigo-glow);
+}
+
+.legend-final {
+  background: var(--accent-teal);
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.5);
+}
+
 /* Instruction Alerts */
 .info-alert {
   background: rgba(129, 140, 248, 0.06);
@@ -979,3 +1095,413 @@ textarea.text-input::placeholder {
   }
 }
 
+/* TFT Focus Animation */
+.tft-focus-pulse {
+  animation: tftFocusBreathe 6s ease-in-out infinite;
+}
+
+@keyframes tftFocusBreathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(129, 140, 248, 0.2);
+    border-color: rgba(129, 140, 248, 0.4);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 35px rgba(129, 140, 248, 0.5), inset 0 0 15px rgba(129, 140, 248, 0.1);
+    border-color: var(--accent-indigo);
+  }
+}
+
+/* EFT Tapping Guide Workspace */
+.tapping-workspace {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 1.5rem;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.tapping-visual-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1rem;
+  height: 290px;
+}
+
+.tft-tapping-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: opacity 0.15s ease-in-out;
+}
+
+.tapping-info-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  padding: 0.5rem;
+}
+
+#tapping-point-name {
+  font-family: var(--font-title);
+  font-size: 1.35rem;
+  color: var(--accent-teal);
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.tapping-point-description {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  min-height: 50px;
+}
+
+.tapping-sequence-list-container {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.tapping-list-title {
+  font-family: var(--font-title);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 0.35rem;
+}
+
+.tapping-sequence-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+}
+
+@media (max-width: 480px) {
+  .tapping-sequence-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.seq-item {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.seq-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-main);
+}
+
+.seq-item.active {
+  background: rgba(45, 212, 191, 0.08);
+  border-color: rgba(45, 212, 191, 0.2);
+  color: var(--accent-teal);
+  font-weight: 500;
+}
+
+/* NLP Workspace styling */
+.nlp-workspace-container {
+  margin: 1.5rem 0;
+}
+
+.nlp-view-box {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: 250px;
+  margin: 0 auto;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 1.5s ease;
+}
+
+.nlp-memory-projection {
+  width: 85%;
+  height: 80%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.25), rgba(45, 212, 191, 0.25));
+  box-shadow: 0 8px 32px rgba(45, 212, 191, 0.15);
+  transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 2;
+  position: relative;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nlp-memory-scene {
+  width: 90%;
+  height: 85%;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(139, 92, 246, 0.45), transparent 50%),
+    radial-gradient(ellipse at 70% 60%, rgba(220, 38, 38, 0.25), transparent 45%),
+    radial-gradient(ellipse at 50% 85%, rgba(45, 212, 191, 0.15), transparent 40%),
+    linear-gradient(180deg, #1e293b 0%, #0f172a 45%, #020617 100%);
+  box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(0, 0, 0, 0.35);
+  animation: nlpColorFade 7s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* Subtle highlight to make the scene look like a photo */
+.nlp-memory-scene::before {
+  content: '';
+  position: absolute;
+  top: 12%;
+  left: 18%;
+  width: 28%;
+  height: 22%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.07), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Dark ground gradient for depth */
+.nlp-memory-scene::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.35), transparent);
+  border-radius: 0 0 10px 10px;
+  pointer-events: none;
+}
+
+/* Step 1 animation: color fading to grayscale and back */
+@keyframes nlpColorFade {
+  0%, 5% {
+    filter: grayscale(0%) brightness(1);
+  }
+  50%, 70% {
+    filter: grayscale(100%) brightness(0.85);
+  }
+  95%, 100% {
+    filter: grayscale(0%) brightness(1);
+  }
+}
+
+/* Step 2: shrinking animation (activated by .scene-shrinking class) */
+.nlp-memory-scene.scene-shrinking {
+  filter: grayscale(100%) brightness(0.85);
+  animation: nlpImageShrink 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes nlpImageShrink {
+  0%, 6% {
+    transform: scale(1);
+    border-radius: 10px;
+    opacity: 1;
+  }
+  60%, 78% {
+    transform: scale(0.06);
+    border-radius: 3px;
+    opacity: 0.85;
+  }
+  92%, 100% {
+    transform: scale(1);
+    border-radius: 10px;
+    opacity: 1;
+  }
+}
+
+/* NLP Grayscale State */
+.nlp-memory-projection.grayscale-fade {
+  filter: grayscale(100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.08));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* NLP Shrunk State ("grain of rice") */
+.nlp-memory-projection.shrink-to-rice {
+  width: 6px !important;
+  height: 6px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 10px #ffffff, 0 0 20px rgba(255, 255, 255, 0.5) !important;
+  border: none !important;
+  filter: none !important;
+  transform: scale(1);
+}
+
+.nlp-memory-projection.shrink-to-rice .nlp-memory-scene {
+  opacity: 0;
+  pointer-events: none;
+  display: none;
+}
+
+.nlp-particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.nlp-eraser-indicator {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid var(--accent-teal);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-teal);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transform: translate(-50%, -120%);
+  opacity: 0.9;
+  font-family: var(--font-title);
+}
+
+.nlp-eraser-indicator svg {
+  animation: eraserWiggle 1.5s ease infinite;
+}
+
+@keyframes eraserWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg) translate(-2px, -2px); }
+  75% { transform: rotate(10deg) translate(2px, 2px); }
+}
+
+/* Step 3: Scene fixed small + fading out as eraser passes */
+.nlp-memory-scene.scene-erasing {
+  filter: grayscale(100%) brightness(0.85);
+  animation: nlpSceneErase 6.5s ease-in-out forwards;
+  transform: scale(0.25);
+}
+
+@keyframes nlpSceneErase {
+  0%, 44% {
+    transform: scale(0.25);
+    opacity: 1;
+  }
+  45%, 100% {
+    transform: scale(0.25);
+    opacity: 0;
+  }
+}
+
+/* Auto-sweep eraser animation */
+.nlp-eraser-indicator.auto-sweep {
+  display: flex !important;
+  opacity: 1 !important;
+  animation: eraserAutoSweep 6.5s ease-in-out forwards;
+}
+
+@keyframes eraserAutoSweep {
+  0% {
+    left: 25%;
+    top: 52%;
+    transform: translate(-50%, -50%);
+  }
+  45% {
+    left: 50%;
+    top: 48%;
+    transform: translate(-50%, -50%);
+  }
+  85% {
+    left: 75%;
+    top: 52%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  100% {
+    left: 78%;
+    top: 52%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+  }
+}
+
+.nlp-controls-container {
+  margin-top: 1.5rem;
+}
+
+/* Responsive constraints for tapping workspace */
+@media (max-width: 640px) {
+  .tapping-workspace {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .tapping-visual-container {
+    height: 220px;
+    padding: 1rem;
+  }
+  .tft-tapping-svg {
+    max-height: 190px;
+  }
+}
+
+
+.deep-breath-pulse {
+  animation: deepBreathe 16s linear infinite;
+}
+
+@keyframes deepBreathe {
+  0% {
+    transform: scale(0.9);
+    border-color: rgba(45, 212, 191, 0.4);
+    box-shadow: 0 0 15px rgba(45, 212, 191, 0.1);
+  }
+  25%, 50% {
+    transform: scale(1.35);
+    border-color: var(--accent-teal);
+    box-shadow: 0 0 40px rgba(45, 212, 191, 0.4);
+    background-color: rgba(45, 212, 191, 0.08);
+  }
+  100% {
+    transform: scale(0.9);
+    border-color: rgba(45, 212, 191, 0.4);
+    box-shadow: 0 0 15px rgba(45, 212, 191, 0.1);
+  }
+}
+
+.deep-breath-text-pulse {
+  animation: none;
+  opacity: 1;
+}
