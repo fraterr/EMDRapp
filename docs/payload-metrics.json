@@ -1,0 +1,8 @@
+{
+  "before": 110388,
+  "after": 65042,
+  "reductionPercent": 41.1,
+  "gzipBefore": 26127,
+  "gzipAfter": 18530,
+  "gzipReductionPercent": 29.1
+}

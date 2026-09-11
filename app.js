@@ -1,1393 +1,908 @@
-/**
- * EMDR Therapy Session Application
- * Core JavaScript Logic
- */
-
-document.addEventListener('DOMContentLoaded', () => {
-  // --- STATE ---
-  const state = {
-    currentScreen: 'screen-welcome',
-    initialSuds: null,
-    postSuds: null,
-    isSubsequentSet: false,
-    sensoryData: {
-      images: '',
-      sounds: '',
-      noises: '',
-      tactile: '',
-      tastes: '',
-      smells: ''
-    },
-    // Bilateral stimulation config
-    stimulation: {
-      startTime: 0,
-      durationMs: 90000, // 1.5 minutes
-      animationFrameId: null,
-      baseSpeed: 3, // 1 to 5
-      variationMode: 'dynamic', // dynamic, wave, constant
-      soundEnabled: true,
-      isRunning: false
-    },
-    history: [],
-    // TFT Tapping state
-    tft: {
-      activePointIndex: 0,
-      tapCount: 0,
-      isPlaying: false,
-      intervalId: null,
-      pulseIntervalMs: 650
-    },
-    // NLP state
-    nlp: {
-      currentState: 'color'
-    },
-    advancedMode: false
-  };
-
-  // --- SCREEN FLOW DEFINITION ---
-  const screenSequence = [
-    'screen-welcome',
-    'screen-recall',
-    'screen-initial-suds',
-    'screen-sensory-images',
-    'screen-sensory-sounds',
-    'screen-sensory-tactile',
-    'screen-sensory-tastes',
-    'screen-sensory-smells',
-    'screen-tft-focus',
-    'screen-eft-tapping',
-    'screen-9-gamut',
-    'screen-stimulation', // Absolute overlay screen
-    'screen-deep-breath',
-    'screen-nlp',
-    'screen-post-suds',
-    'screen-summary',
-    'screen-finish'
-  ];
-
-  // Map screens to progress percentages (0 - 100)
-  const screenProgress = {
-    'screen-welcome': 5,
-    'screen-recall': 12,
-    'screen-initial-suds': 20,
-    'screen-sensory-images': 28,
-    'screen-sensory-sounds': 36,
-    'screen-sensory-tactile': 44,
-    'screen-sensory-tastes': 50,
-    'screen-sensory-smells': 56,
-    'screen-tft-focus': 62,
-    'screen-eft-tapping': 70,
-    'screen-9-gamut': 75,
-    'screen-stimulation': 80,
-    'screen-deep-breath': 88,
-    'screen-nlp': 94,
-    'screen-post-suds': 97,
-    'screen-summary': 99,
-    'screen-finish': 100
-  };
-
-  // --- AUDIO SYNTHESIZER ---
-  function playTherapeuticChime() {
-    if (state.stimulation.soundEnabled === false) return;
-    
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return;
-      
-      const audioCtx = new AudioContextClass();
-      const playTone = (freq, startOffset, duration, volume = 0.15) => {
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startOffset);
-        
-        // Soothing attack and decay
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime + startOffset);
-        gainNode.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + startOffset + 0.05);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + startOffset + duration);
-        
-        osc.start(audioCtx.currentTime + startOffset);
-        osc.stop(audioCtx.currentTime + startOffset + duration);
-      };
-      
-      // Calming high bell chime: C6 (1046.5Hz) followed by E6 (1318.5Hz)
-      playTone(1046.5, 0, 1.8, 0.12);
-      playTone(1318.5, 0.08, 1.5, 0.10);
-    } catch (e) {
-      console.warn("Audio Context failed to initialize: ", e);
-    }
-  }
-
-  // --- SCREEN NAVIGATION CONTROLLER ---
-  function showScreen(screenId) {
-    // Hide all screens
-    const allScreens = document.querySelectorAll('.screen, .screen-stimulation');
-    allScreens.forEach(scr => {
-      scr.classList.remove('active');
-      scr.style.display = 'none';
-    });
-
-    // Special handling for the absolute black stimulation screen
-    const mainHeader = document.getElementById('app-header');
-    const mainWrapper = document.getElementById('app-interface-wrapper');
-    
-    if (screenId === 'screen-stimulation') {
-      mainHeader.style.opacity = '0';
-      mainHeader.style.pointerEvents = 'none';
-      if (mainWrapper) mainWrapper.style.display = 'none';
-      
-      const stimScreen = document.getElementById('screen-stimulation');
-      stimScreen.style.display = 'flex';
-      // Force repaint
-      stimScreen.offsetHeight;
-      stimScreen.classList.add('active');
-    } else {
-      mainHeader.style.opacity = '1';
-      mainHeader.style.pointerEvents = 'all';
-      if (mainWrapper) mainWrapper.style.display = 'block';
-      
-      const targetScreen = document.getElementById(screenId);
-      if (targetScreen) {
-        targetScreen.style.display = 'block';
-        // Force repaint
-        targetScreen.offsetHeight;
-        targetScreen.classList.add('active');
-      }
-    }
-
-    state.currentScreen = screenId;
-    
-    // Update progress bar
-    const progressFill = document.getElementById('session-progress');
-    if (progressFill && screenProgress[screenId] !== undefined) {
-      progressFill.style.width = `${screenProgress[screenId]}%`;
-    }
-
-    // Custom initializations for specific screens
-    if (screenId === 'screen-recall') {
-      startBreathingGuide();
-      // Customize prompt based on whether it is a repeated set
-      const recallTitle = document.querySelector('#screen-recall h2');
-      const recallDesc = document.querySelector('#screen-recall p.description');
-      if (state.isSubsequentSet) {
-        if (recallTitle) recallTitle.textContent = "Refocus on the Memory";
-        if (recallDesc) recallDesc.textContent = "Take a moment to bring the trauma memory back into focus. Observe whatever remains, noticing any changes in your feelings, thoughts, or physical body.";
-      } else {
-        if (recallTitle) recallTitle.textContent = "Bring the Memory to Mind";
-        if (recallDesc) recallDesc.textContent = "Close your eyes or focus on the screen. Bring the distressing or traumatic memory to your awareness. Allow the thoughts, feelings, and body sensations associated with this event to arise.";
-      }
-    } else {
-      stopBreathingGuide();
-    }
-
-    if (screenId === 'screen-tft-focus') {
-      const tftNextBtn = document.getElementById('btn-tft-focus-next');
-      if (tftNextBtn) {
-        if (!state.advancedMode && !state.isSubsequentSet && state.initialSuds === null) {
-          tftNextBtn.textContent = "Evaluate Distress";
-        } else {
-          tftNextBtn.textContent = "Continue to Tapping";
-        }
-      }
-    }
-
-    if (screenId === 'screen-eft-tapping') {
-      startEftTapping();
-    } else {
-      stopEftTapping();
-    }
-
-    if (screenId === 'screen-nlp') {
-      // Reset NLP state
-      state.nlp.currentState = 'color';
-      
-      const nlpInstruction = document.getElementById('nlp-instruction');
-      if (nlpInstruction) {
-        nlpInstruction.textContent = "Bring the distressing scene back into your mind's eye. Using your own mental imagination, visualize the scene and mentally transform it, stripping away all colors until it is completely black and white.";
-      }
-
-      const projection = document.getElementById('nlp-memory-projection');
-      if (projection) {
-        projection.style.display = 'flex';
-        projection.classList.remove('grayscale-fade', 'shrink-to-rice');
-      }
-
-      // Restart the scene animation cleanly
-      const scene = document.getElementById('nlp-memory-scene');
-      if (scene) {
-        scene.style.display = 'block';
-        scene.style.opacity = '1';
-        scene.classList.remove('scene-shrinking', 'scene-erasing');
-        scene.style.animation = 'none';
-        scene.offsetHeight; // force reflow
-        scene.style.animation = '';
-      }
-
-      const viewBox = document.getElementById('nlp-view-box');
-      if (viewBox) {
-        viewBox.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
-      }
-
-      const stepBtn = document.getElementById('btn-nlp-next-step');
-      if (stepBtn) {
-        stepBtn.style.display = 'block';
-        stepBtn.textContent = "I have turned it Black & White";
-      }
-
-      const navButtons = document.getElementById('nlp-navigation-buttons');
-      if (navButtons) {
-        navButtons.style.display = 'none';
-      }
-
-      const eraser = document.getElementById('nlp-eraser-indicator');
-      if (eraser) {
-        eraser.style.display = 'none';
-        eraser.classList.remove('auto-sweep');
-      }
-
-      setupNlpCanvas();
-    } else {
-      if (nlpAnimationId) {
-        cancelAnimationFrame(nlpAnimationId);
-        nlpAnimationId = null;
-      }
-    }
-
-    if (screenId === 'screen-deep-breath') {
-      startDeepBreathGuide();
-    } else {
-      stopDeepBreathGuide();
-    }
-
-    if (screenId === 'screen-summary') {
-      const beforeVal = document.getElementById('summary-before');
-      const afterVal = document.getElementById('summary-after');
-      if (beforeVal) beforeVal.textContent = state.initialSuds;
-      if (afterVal) afterVal.textContent = state.postSuds;
-
-      const feedbackText = document.getElementById('summary-text-feedback');
-      if (feedbackText) {
-        const drop = state.initialSuds - state.postSuds;
-        if (drop > 0) {
-          feedbackText.textContent = `Great progress! Your distress intensity has reduced by ${drop} point(s) (from ${state.initialSuds} down to ${state.postSuds}). Would you like to do another set of eye-movements to reduce it even further?`;
-        } else if (drop === 0) {
-          feedbackText.textContent = `Your distress intensity is currently stable at ${state.postSuds}/10. EMDR processing often requires multiple rounds to begin shifting. Would you like to do another set?`;
-        } else {
-          feedbackText.textContent = `Your distress is rated at ${state.postSuds}/10. Sometimes, bringing details to mind temporarily increases awareness of the distress before it starts decreasing. This is a normal part of processing. Would you like to perform another set?`;
-        }
-      }
-    }
-
-    if (screenId === 'screen-finish') {
-      saveSessionToHistory();
-      renderHistoryList();
-    }
-  }
-
-  // --- BREATHING GUIDE SYNCHRONIZER ---
-  let breathInterval = null;
-  function startBreathingGuide() {
-    const statusText = document.getElementById('breath-status');
-    if (!statusText) return;
-    
-    let cycle = 0; // 0 = Inhale, 1 = Hold, 2 = Exhale, 3 = Hold (4s cycles)
-    statusText.textContent = "Inhale";
-    
-    if (breathInterval) clearInterval(breathInterval);
-    breathInterval = setInterval(() => {
-      cycle = (cycle + 1) % 2; // Simple 2-phase for the CSS breath-circle
-      if (cycle === 0) {
-        statusText.textContent = "Inhale";
-      } else {
-        statusText.textContent = "Exhale";
-      }
-    }, 4000); // Toggles every 4 seconds to match the 8-second CSS animation cycle
-  }
-
-  function stopBreathingGuide() {
-    if (breathInterval) {
-      clearInterval(breathInterval);
-      breathInterval = null;
-    }
-  }
-
-  // --- DEEP BREATH GUIDE SYNCHRONIZER (4-4-8 cycle) ---
-  let deepBreathTimer = null;
-  function startDeepBreathGuide() {
-    const statusText = document.getElementById('deep-breath-status');
-    if (!statusText) return;
-    
-    let seconds = 0;
-    statusText.textContent = "Inhale";
-    
-    if (deepBreathTimer) clearInterval(deepBreathTimer);
-    deepBreathTimer = setInterval(() => {
-      seconds = (seconds + 1) % 16;
-      if (seconds === 0) {
-        statusText.textContent = "Inhale";
-      } else if (seconds === 4) {
-        statusText.textContent = "Hold";
-      } else if (seconds === 8) {
-        statusText.textContent = "Exhale";
-      }
-    }, 1000);
-  }
-
-  function stopDeepBreathGuide() {
-    if (deepBreathTimer) {
-      clearInterval(deepBreathTimer);
-      deepBreathTimer = null;
-    }
-  }
-
-  // --- SUDS RATING BUTTONS EVENT INITIALIZATION ---
-  function setupSudsButtons(gridId, nextBtnId, indicatorId, type) {
-    const grid = document.getElementById(gridId);
-    const nextBtn = document.getElementById(nextBtnId);
-    const indicator = document.getElementById(indicatorId);
-    
-    if (!grid || !nextBtn || !indicator) return;
-
-    // Define qualitative distress labels
-    const sudsLabels = {
-      1: "1 - Alert & peaceful; no distress.",
-      2: "2 - Minimal; barely noticeable discomfort.",
-      3: "3 - Mild; slightly uncomfortable but easy to ignore.",
-      4: "4 - Moderate; light distress, noticeable but manageable.",
-      5: "5 - Moderate; clear distress, starting to feel heavy.",
-      6: "6 - Moderate-Strong; unpleasant, thoughts are disruptive.",
-      7: "7 - Strong; highly uncomfortable, hard to focus on other things.",
-      8: "8 - Severe; intense emotional pain, body feels tense.",
-      9: "9 - Very Severe; extremely overwhelming, close to panic.",
-      10: "10 - Highest Distress; absolute maximum pain imaginable."
-    };
-
-    grid.addEventListener('click', (e) => {
-      const btn = e.target.closest('.suds-btn');
-      if (!btn) return;
-
-      // Select active rating
-      grid.querySelectorAll('.suds-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-
-      const value = parseInt(btn.dataset.value, 10);
-      if (type === 'initial') {
-        state.initialSuds = value;
-      } else {
-        state.postSuds = value;
-      }
-
-      // Update indicator text and color
-      indicator.textContent = sudsLabels[value];
-      
-      // Color code text based on SUDS level
-      if (value <= 2) indicator.style.color = 'var(--suds-1-2)';
-      else if (value <= 4) indicator.style.color = 'var(--suds-3-4)';
-      else if (value <= 6) indicator.style.color = 'var(--suds-5-6)';
-      else if (value <= 8) indicator.style.color = 'var(--suds-7-8)';
-      else indicator.style.color = 'var(--suds-9-10)';
-
-      // Enable next step button
-      nextBtn.disabled = false;
-    });
-  }
-
-  setupSudsButtons('initial-suds-grid', 'btn-initial-suds-next', 'initial-suds-indicator', 'initial');
-  setupSudsButtons('post-suds-grid', 'btn-post-suds-next', 'post-suds-indicator', 'post');
-
-  // --- EFT TAPPING ENGINE & CONSTANTS ---
-  const eftPoints = [
-    { id: 'kc', name: 'Karate Chop (KC)', desc: 'Tap the outer edge of your hand, in the fleshy part below the pinky finger.', img: 'assets/EFT points/karate chop.jpg' },
-    { id: 'th', name: 'Top of Head (TH)', desc: 'Tap the crown / center of the top of your head with your fingertips.', img: 'assets/EFT points/Top head.jpg' },
-    { id: 'eb', name: 'Eyebrow (EB)', desc: 'Tap the inner edge of your eyebrows, near where they meet the bridge of your nose.', img: 'assets/EFT points/eyebrows.jpg' },
-    { id: 'se', name: 'Side of Eye (SE)', desc: 'Tap the bone at the outer side of your eyes, near the temple.', img: 'assets/EFT points/side eye.jpg' },
-    { id: 'ue', name: 'Under Eye (UE)', desc: 'Tap the bone directly under your eyes, centered beneath your pupil.', img: 'assets/EFT points/under eye.jpg' },
-    { id: 'un', name: 'Under Nose (UN)', desc: 'Tap the small crease between the bottom of your nose and your upper lip.', img: 'assets/EFT points/under nose.jpg' },
-    { id: 'ch', name: 'Chin Point (Ch)', desc: 'Tap the horizontal crease between your lower lip and the point of your chin.', img: 'assets/EFT points/chin point.jpg' },
-    { id: 'cb', name: 'Collarbone (CB)', desc: 'Tap about one inch down and out from the U-shaped notch at the base of your throat.', img: 'assets/EFT points/collarbone.jpg' },
-    { id: 'ua', name: 'Under Arm (UA)', desc: 'Tap about four inches below your armpit, on the side of your body (at bra-strap height).', img: 'assets/EFT points/under arm.jpg' }
-  ];
-
-  function selectTappingPoint(pointId) {
-    const pIdx = eftPoints.findIndex(p => p.id === pointId);
-    if (pIdx === -1) return;
-    
-    state.tft.activePointIndex = pIdx;
-    
-    // Update active illustration image with a quick fade transition
-    const point = eftPoints[pIdx];
-    const imgEl = document.getElementById('tapping-point-image');
-    if (imgEl) {
-      imgEl.style.opacity = '0';
-      setTimeout(() => {
-        imgEl.src = point.img;
-        imgEl.alt = point.name;
-        imgEl.style.opacity = '1';
-      }, 120);
-    }
-    
-    // Update details panel text
-    const nameEl = document.getElementById('tapping-point-name');
-    const descEl = document.getElementById('tapping-point-desc');
-    if (nameEl) nameEl.textContent = point.name;
-    if (descEl) descEl.textContent = point.desc;
-    
-    // Update sequence list highlights
-    const listItems = document.querySelectorAll('.seq-item');
-    listItems.forEach(item => {
-      item.classList.remove('active');
-      if (item.dataset.pointId === pointId) {
-        item.classList.add('active');
-      }
-    });
-  }
-
-  function startEftTapping() {
-    selectTappingPoint('kc');
-  }
-
-  // Obsolete - kept for layout compatibility
-  function stopEftTapping() {
-  }
-
-  // Bind the sequence checklist item hover and click events
-  function initTappingListListeners() {
-    const listItems = document.querySelectorAll('.seq-item');
-    listItems.forEach(item => {
-      item.addEventListener('click', () => {
-        selectTappingPoint(item.dataset.pointId);
-      });
-      item.addEventListener('mouseenter', () => {
-        selectTappingPoint(item.dataset.pointId);
-      });
-    });
-  }
-
-  // --- NLP SUBMODALITIES ENGINE ---
-  let nlpCtx = null;
-  let nlpAnimationId = null;
-  const nlpParticles = [];
-  const nlpStars = [];
-
-  class NlpParticle {
-    constructor(x, y) {
-      this.x = x;
-      this.y = y;
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 1 + Math.random() * 5;
-      this.vx = Math.cos(angle) * speed;
-      this.vy = Math.sin(angle) * speed;
-      this.radius = 1 + Math.random() * 3;
-      this.color = `hsla(${200 + Math.random() * 80}, 90%, 70%, ${0.7 + Math.random() * 0.3})`;
-      this.alpha = 1;
-      this.decay = 0.01 + Math.random() * 0.02;
-    }
-    update() {
-      this.x += this.vx;
-      this.y += this.vy;
-      this.alpha -= this.decay;
-    }
-    draw(ctx) {
-      ctx.save();
-      ctx.globalAlpha = this.alpha;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fillStyle = this.color;
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = this.color;
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  class NlpStar {
-    constructor(width, height) {
-      this.x = Math.random() * width;
-      this.y = Math.random() * height;
-      this.radius = 0.5 + Math.random() * 1.5;
-      this.alpha = 0.1 + Math.random() * 0.8;
-      this.speed = 0.005 + Math.random() * 0.015;
-      this.glow = Math.random() > 0.5;
-    }
-    update() {
-      this.alpha += this.speed;
-      if (this.alpha > 0.95 || this.alpha < 0.05) {
-        this.speed = -this.speed;
-      }
-    }
-    draw(ctx) {
-      ctx.save();
-      ctx.globalAlpha = this.alpha;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      if (this.glow) {
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = '#ffffff';
-      }
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  function setupNlpCanvas() {
-    const canvas = document.getElementById('nlp-canvas');
-    if (!canvas) return;
-    
-    nlpCtx = canvas.getContext('2d');
-    
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-    
-    nlpStars.length = 0;
-    for (let i = 0; i < 40; i++) {
-      nlpStars.push(new NlpStar(canvas.width, canvas.height));
-    }
-    
-    nlpParticles.length = 0;
-    
-    if (nlpAnimationId) {
-      cancelAnimationFrame(nlpAnimationId);
-    }
-    
-    animateNlpCanvas();
-  }
-
-  function animateNlpCanvas() {
-    if (!nlpCtx) return;
-    
-    const canvas = document.getElementById('nlp-canvas');
-    if (!canvas) return;
-    
-    nlpCtx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (state.nlp.currentState === 'void' || state.nlp.currentState === 'erase') {
-      nlpStars.forEach(star => {
-        star.update();
-        star.draw(nlpCtx);
-      });
-    }
-    
-    for (let i = nlpParticles.length - 1; i >= 0; i--) {
-      const p = nlpParticles[i];
-      p.update();
-      if (p.alpha <= 0) {
-        nlpParticles.splice(i, 1);
-      } else {
-        p.draw(nlpCtx);
-      }
-    }
-    
-    nlpAnimationId = requestAnimationFrame(animateNlpCanvas);
-  }
-
-  function initNlpListeners() {
-    const canvas = document.getElementById('nlp-canvas');
-    const viewBox = document.getElementById('nlp-view-box');
-    const eraser = document.getElementById('nlp-eraser-indicator');
-    
-    if (!canvas || !viewBox || !eraser) return;
-    
-    const handleMove = (e) => {
-      if (state.nlp.currentState !== 'erase') return;
-      
-      const rect = canvas.getBoundingClientRect();
-      let clientX, clientY;
-      
-      if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-      }
-      
-      const x = clientX - rect.left;
-      const y = clientY - rect.top;
-      
-      eraser.style.left = `${x}px`;
-      eraser.style.top = `${y}px`;
-      
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const dist = Math.hypot(x - centerX, y - centerY);
-      
-      if (dist < 18) {
-        triggerNlpErasure(centerX, centerY);
-      }
-    };
-    
-    viewBox.addEventListener('mouseenter', () => {
-      if (state.nlp.currentState === 'erase') {
-        eraser.style.display = 'flex';
-      }
-    });
-    
-    viewBox.addEventListener('mouseleave', () => {
-      eraser.style.display = 'none';
-    });
-    
-    canvas.addEventListener('mousemove', handleMove);
-    canvas.addEventListener('touchmove', handleMove, { passive: true });
-    
-    canvas.addEventListener('touchstart', (e) => {
-      if (state.nlp.currentState === 'erase') {
-        eraser.style.display = 'flex';
-        handleMove(e);
-      }
-    }, { passive: true });
-  }
-
-  function triggerNlpErasure(cx, cy) {
-    state.nlp.currentState = 'void';
-    
-    const projection = document.getElementById('nlp-memory-projection');
-    const eraser = document.getElementById('nlp-eraser-indicator');
-    if (projection) projection.style.display = 'none';
-    if (eraser) eraser.style.display = 'none';
-    
-    playTherapeuticChime();
-    
-    for (let i = 0; i < 70; i++) {
-      nlpParticles.push(new NlpParticle(cx, cy));
-    }
-    
-    const nlpInstruction = document.getElementById('nlp-instruction');
-    if (nlpInstruction) {
-      nlpInstruction.textContent = "The image is dissolved. Only an infinite, peaceful space remains. Rest in this calm void.";
-    }
-    
-    const viewBox = document.getElementById('nlp-view-box');
-    if (viewBox) {
-      viewBox.style.backgroundColor = '#000000';
-    }
-    
-    setTimeout(() => {
-      const navButtons = document.getElementById('nlp-navigation-buttons');
-      if (navButtons) {
-        navButtons.style.display = 'flex';
-      }
-    }, 2500);
-  }
-
-  // --- INPUT RETRIEVAL SYSTEM ---
-  function captureSensoryData() {
-    state.sensoryData.images = document.getElementById('input-images').value.trim();
-    state.sensoryData.sounds = document.getElementById('input-sounds').value.trim();
-    state.sensoryData.tactile = document.getElementById('input-tactile').value.trim();
-    state.sensoryData.tastes = document.getElementById('input-tastes').value.trim();
-    state.sensoryData.smells = document.getElementById('input-smells').value.trim();
-  }
-
-  function resetSensoryInputs() {
-    document.getElementById('input-images').value = '';
-    document.getElementById('input-sounds').value = '';
-    document.getElementById('input-tactile').value = '';
-    document.getElementById('input-tastes').value = '';
-    document.getElementById('input-smells').value = '';
-    state.sensoryData = { images: '', sounds: '', noises: '', tactile: '', tastes: '', smells: '' };
-  }
-
-  // --- BILATERAL STIMULATION EYE-TRACKING ENGINE ---
-  function startBilateralStimulation() {
-    const overlay = document.getElementById('stim-instruction-overlay');
-    const instructionContent = document.getElementById('stim-instruction-content');
-    const countdownEl = document.getElementById('stim-countdown');
-    const startCountdownBtn = document.getElementById('btn-start-countdown');
-    const pointerContainer = document.getElementById('emdr-pointer-container');
-    const progressBar = document.getElementById('stim-progress-bar');
-    
-    if (!pointerContainer) return;
-
-    // Show overlay and prepare countdown
-    if (overlay) {
-      overlay.style.display = 'flex';
-      overlay.style.opacity = '1';
-      pointerContainer.style.opacity = '0'; // hide pointer during countdown
-      
-      if (instructionContent) instructionContent.style.display = 'block';
-      if (countdownEl) countdownEl.style.display = 'none';
-
-      const startAction = () => {
-        if (startCountdownBtn) startCountdownBtn.removeEventListener('click', startAction);
-        
-        if (instructionContent) instructionContent.style.display = 'none';
-        if (countdownEl) {
-          countdownEl.style.display = 'block';
-          
-          let count = 3;
-          countdownEl.textContent = count;
-          
-          const countInterval = setInterval(() => {
-            count--;
-            if (count > 0) {
-              countdownEl.textContent = count;
-            } else if (count === 0) {
-              countdownEl.textContent = "Start";
-            } else {
-              clearInterval(countInterval);
-              overlay.style.opacity = '0';
-              setTimeout(() => {
-                overlay.style.display = 'none';
-                pointerContainer.style.opacity = '1';
-                beginStimulationAnimation(pointerContainer, progressBar);
-              }, 500); // Wait for fade out
-            }
-          }, 1000);
-        } else {
-          overlay.style.display = 'none';
-          pointerContainer.style.opacity = '1';
-          beginStimulationAnimation(pointerContainer, progressBar);
-        }
-      };
-
-      if (startCountdownBtn) {
-        // Replace node to clean up any old listeners
-        startCountdownBtn.replaceWith(startCountdownBtn.cloneNode(true));
-        const freshBtn = document.getElementById('btn-start-countdown');
-        freshBtn.addEventListener('click', startAction);
-      } else {
-        // fallback if button isn't found
-        beginStimulationAnimation(pointerContainer, progressBar);
-      }
-    } else {
-      beginStimulationAnimation(pointerContainer, progressBar);
-    }
-  }
-
-  function beginStimulationAnimation(pointerContainer, progressBar) {
-    // Play starting chime
-    playTherapeuticChime();
-
-    // Load user settings (defaults since prep screen was removed)
-    const speedRangeVal = 4.5;
-    const variationMode = 'dynamic';
-    const soundSetting = 'enabled';
-    
-    state.stimulation.baseSpeed = speedRangeVal;
-    state.stimulation.variationMode = variationMode;
-    state.stimulation.soundEnabled = (soundSetting === 'enabled');
-    
-    state.stimulation.isRunning = true;
-    state.stimulation.startTime = performance.now();
-
-    // Reset pointer container scale/style
-    pointerContainer.style.left = '50%';
-    pointerContainer.style.top = '50%';
-
-    // Animation physics variables
-    let angle = 0; // Tracks the phase of the sinusoidal oscillation (sin(angle) goes from -1 to 1)
-    let prevSin = 0; // Tracks previous sine value to detect center crossings
-    let theta = 0; // Current diagonal trajectory angle in radians (0 is horizontal)
-    const screenPadding = 60; // Keep the finger icon inside the screen edges
-
-    function updateFrame(timestamp) {
-      if (!state.stimulation.isRunning) return;
-
-      const elapsed = timestamp - state.stimulation.startTime;
-      const progressFactor = Math.min(elapsed / state.stimulation.durationMs, 1);
-
-      // Update progress bar
-      if (progressBar) {
-        progressBar.style.width = `${progressFactor * 100}%`;
-      }
-
-      // Check for timeout
-      if (progressFactor >= 1) {
-        stopBilateralStimulation(false); // Finished naturally
-        return;
-      }
-
-      // Dynamic Speed Calculation
-      // Base frequency of eye movement oscillations (rad per millisecond)
-      // speedRangeVal goes from 1 (slow, ~0.3 Hz) to 5 (fast, ~1.2 Hz)
-      let baseFrequency = 0.0015 + (speedRangeVal * 0.0007);
-      
-      let currentFrequency = baseFrequency;
-      
-      if (variationMode === 'dynamic') {
-        // Slowly oscillate the frequency over time (30 second period) and add fine random jitter
-        const scale = 1 + 0.35 * Math.sin(timestamp * 0.0002) + (Math.random() * 0.05 - 0.025);
-        currentFrequency = baseFrequency * scale;
-      } else if (variationMode === 'wave') {
-        // Smooth swell pattern (accelerating and decelerating over a 12 second cycle)
-        const scale = 1 + 0.5 * Math.sin(timestamp * 0.0005);
-        currentFrequency = baseFrequency * scale;
-      }
-
-      // Ramp up speed slowly over the first 3 seconds
-      const rampDuration = 3000;
-      if (elapsed < rampDuration) {
-        const rampProgress = elapsed / rampDuration;
-        // Start at 0.15x speed, linearly ramp up to 1.0x
-        currentFrequency *= (0.15 + 0.85 * rampProgress);
-      }
-
-      // Angle step increment per frame based on current frequency
-      // Using deltaTime to prevent frame-rate physics dependency
-      angle += currentFrequency * 16.67; // Approx 60fps frame delta
-
-      const currentSin = Math.sin(angle);
-
-      // Detect center crossing (sign change of sine, when finger passes the center of the screen)
-      // We check prevSin !== 0 to prevent a double trigger or trigger on the first frame.
-      if (Math.sign(currentSin) !== Math.sign(prevSin) && prevSin !== 0) {
-        // Choose a new random diagonal angle. 
-        // We limit theta to [-Math.PI / 3, Math.PI / 3] to keep a prominent horizontal 
-        // tracking component (lateral desensitization), which is the standard for EMDR,
-        // while introducing dynamic diagonal variations.
-        theta = (Math.random() * 2 - 1) * (Math.PI / 3);
-      }
-      prevSin = currentSin;
-
-      // Position along the diagonal axis defined by theta
-      const screenWidth = window.innerWidth;
-      const screenHeight = window.innerHeight;
-
-      const minX = screenPadding;
-      const maxX = screenWidth - screenPadding - 160; // subtracting finger width (160px)
-      const minY = screenPadding;
-      const maxY = screenHeight - screenPadding - 160; // subtracting finger height (160px)
-
-      // Safe bounds to prevent negative ranges on tiny viewports
-      const safeMaxX = Math.max(maxX, minX + 10);
-      const safeMaxY = Math.max(maxY, minY + 10);
-
-      const centerX = minX + (safeMaxX - minX) / 2;
-      const centerY = minY + (safeMaxY - minY) / 2;
-
-      const rangeX = (safeMaxX - minX) / 2;
-      const rangeY = (safeMaxY - minY) / 2;
-
-      // factor oscillates smoothly between -1 and 1
-      const factor = currentSin;
-
-      const targetX = centerX + rangeX * factor * Math.cos(theta);
-      const targetY = centerY + rangeY * factor * Math.sin(theta);
-
-      pointerContainer.style.left = `${targetX}px`;
-      pointerContainer.style.top = `${targetY}px`;
-
-      state.stimulation.animationFrameId = requestAnimationFrame(updateFrame);
-    }
-
-    state.stimulation.animationFrameId = requestAnimationFrame(updateFrame);
-  }
-
-  function stopBilateralStimulation(wasSkipped = false) {
-    state.stimulation.isRunning = false;
-    
-    if (state.stimulation.animationFrameId) {
-      cancelAnimationFrame(state.stimulation.animationFrameId);
-      state.stimulation.animationFrameId = null;
-    }
-
-    // Play final chime
-    playTherapeuticChime();
-
-    // Transition to deep breath screen
-    setTimeout(() => {
-      showScreen('screen-deep-breath');
-    }, 600);
-  }
-
-  // Handle manual stimulation skip/completion
-  const stimScreen = document.getElementById('screen-stimulation');
-  if (stimScreen) {
-    stimScreen.addEventListener('click', () => {
-      if (state.stimulation.isRunning) {
-        stopBilateralStimulation(true);
-      }
-    });
-  }
-
-  // --- LOCALSTORAGE LOGS & STATISTICS ---
-  function saveSessionToHistory() {
-    if (state.initialSuds === null || state.postSuds === null) return;
-
-    const sessionRecord = {
-      date: new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      initial: state.initialSuds,
-      final: state.postSuds,
-      reduction: Math.max(state.initialSuds - state.postSuds, 0),
-      images: state.sensoryData.images
-    };
-
-    // Load from localStorage
-    try {
-      const stored = localStorage.getItem('emdr_session_history');
-      let historyArray = stored ? JSON.parse(stored) : [];
-      
-      // Limit local history to 20 items
-      historyArray.unshift(sessionRecord);
-      if (historyArray.length > 20) {
-        historyArray = historyArray.slice(0, 20);
-      }
-
-      localStorage.setItem('emdr_session_history', JSON.stringify(historyArray));
-      state.history = historyArray;
-    } catch (e) {
-      console.error("Could not write history to localStorage: ", e);
-    }
-  }
-
-  function renderHistoryList() {
-    const listEl = document.getElementById('history-log-list');
-    if (!listEl) return;
-
-    listEl.innerHTML = '';
-
-    // Load history
-    let historyArray = [];
-    try {
-      const stored = localStorage.getItem('emdr_session_history');
-      historyArray = stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      console.error(e);
-    }
-
-    // Call chart renderer
-    renderHistoryChart();
-
-    if (historyArray.length === 0) {
-      listEl.innerHTML = '<div class="history-empty">No logged sessions yet. Completed sessions will show up here.</div>';
-      return;
-    }
-
-    historyArray.forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'history-item';
-
-      const detailsDiv = document.createElement('div');
-      
-      const dateSpan = document.createElement('div');
-      dateSpan.className = 'history-date';
-      dateSpan.textContent = item.date;
-      
-      const descSpan = document.createElement('div');
-      descSpan.style.fontSize = '0.8rem';
-      descSpan.style.color = 'rgba(255, 255, 255, 0.4)';
-      
-      // Display truncated visual memory if recorded
-      let memo = item.images || 'General Processing';
-      if (memo.length > 35) memo = memo.substring(0, 32) + '...';
-      descSpan.textContent = `Memory focus: "${memo}"`;
-
-      detailsDiv.appendChild(dateSpan);
-      detailsDiv.appendChild(descSpan);
-
-      const changeSpan = document.createElement('div');
-      changeSpan.className = 'history-change';
-      
-      const changeVal = item.initial - item.final;
-      if (changeVal > 0) {
-        changeSpan.className += ' history-change-reduced';
-        changeSpan.innerHTML = `Reduced by ${changeVal} (${item.initial} → ${item.final})`;
-      } else {
-        changeSpan.innerHTML = `Maintained (${item.initial} → ${item.final})`;
-      }
-
-      div.appendChild(detailsDiv);
-      div.appendChild(changeSpan);
-      listEl.appendChild(div);
-    });
-  }
-
-  function renderHistoryChart() {
-    const chartContainer = document.getElementById('history-chart-container');
-    if (!chartContainer) return;
-
-    // Load history
-    let historyArray = [];
-    try {
-      const stored = localStorage.getItem('emdr_session_history');
-      historyArray = stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      console.error(e);
-    }
-
-    if (historyArray.length === 0) {
-      chartContainer.style.display = 'none';
-      return;
-    }
-
-    chartContainer.style.display = 'flex';
-
-    // Reverse history to show chronological order (oldest to newest)
-    const reversedHistory = [...historyArray].reverse();
-    const total = reversedHistory.length;
-
-    // SVG Settings
-    const svgWidth = 500;
-    const svgHeight = 160;
-    const padding = { top: 20, right: 20, bottom: 20, left: 30 };
-    const chartWidth = svgWidth - padding.left - padding.right;
-    const chartHeight = svgHeight - padding.top - padding.bottom;
-
-    // Coordinate mapping functions
-    const getY = (val) => {
-      // Map scale 1-10 to Y pixel coords (10 is top, 1 is bottom)
-      return padding.top + ((10 - val) * chartHeight / 9);
-    };
-
-    const getX = (idx) => {
-      if (total <= 1) {
-        return padding.left + chartWidth / 2;
-      }
-      return padding.left + (idx * chartWidth / (total - 1));
-    };
-
-    // 1. Grid Levels (1, 5, 10)
-    const gridLevels = [1, 5, 10];
-    let gridHtml = '';
-    gridLevels.forEach(level => {
-      const y = getY(level);
-      gridHtml += `
-        <line class="chart-grid-line" x1="${padding.left}" y1="${y}" x2="${svgWidth - padding.right}" y2="${y}"></line>
-        <text class="chart-axis-text" x="${padding.left - 10}" y="${y + 4}" text-anchor="end">${level}</text>
-      `;
-    });
-
-    // 2. Connector Lines (stress reduction visualization)
-    let connectorsHtml = '';
-    reversedHistory.forEach((session, i) => {
-      const x = getX(i);
-      const yInitial = getY(session.initial);
-      const yFinal = getY(session.final);
-      connectorsHtml += `
-        <line class="chart-reduction-connector" x1="${x}" y1="${yInitial}" x2="${x}" y2="${yFinal}"></line>
-      `;
-    });
-
-    // 3. Path Data for Line Lines
-    let initialPathData = '';
-    let finalPathData = '';
-    reversedHistory.forEach((session, i) => {
-      const x = getX(i);
-      const yInitial = getY(session.initial);
-      const yFinal = getY(session.final);
-
-      if (i === 0) {
-        initialPathData += `M ${x} ${yInitial}`;
-        finalPathData += `M ${x} ${yFinal}`;
-      } else {
-        initialPathData += ` L ${x} ${yInitial}`;
-        finalPathData += ` L ${x} ${yFinal}`;
-      }
-    });
-
-    // 4. Dot points for user sessions
-    let dotsHtml = '';
-    reversedHistory.forEach((session, i) => {
-      const x = getX(i);
-      const yInitial = getY(session.initial);
-      const yFinal = getY(session.final);
-      
-      const formattedDate = session.date || 'Unknown Date';
-      const tooltipInitial = `Session ${i + 1} (${formattedDate}): Initial SUDS = ${session.initial}`;
-      const tooltipFinal = `Session ${i + 1} (${formattedDate}): Final SUDS = ${session.final}`;
-
-      dotsHtml += `
-        <circle class="chart-dot-initial" cx="${x}" cy="${yInitial}" r="4" data-tooltip="${tooltipInitial}">
-          <title>${tooltipInitial}</title>
-        </circle>
-        <circle class="chart-dot-final" cx="${x}" cy="${yFinal}" r="4" data-tooltip="${tooltipFinal}">
-          <title>${tooltipFinal}</title>
-        </circle>
-      `;
-    });
-
-    // Assemble SVG HTML Content
-    chartContainer.innerHTML = `
-      <svg class="history-chart-svg" viewBox="0 0 ${svgWidth} ${svgHeight}">
-        <!-- Grid Levels -->
-        ${gridHtml}
-        
-        <!-- Connector Lines -->
-        ${connectorsHtml}
-        
-        <!-- Lines (only if we have more than 1 data point) -->
-        ${total > 1 ? `<path class="chart-line-initial" d="${initialPathData}"></path>` : ''}
-        ${total > 1 ? `<path class="chart-line-final" d="${finalPathData}"></path>` : ''}
-        
-        <!-- Dots -->
-        ${dotsHtml}
-      </svg>
-      <div class="chart-legend">
-        <div class="legend-item">
-          <div class="legend-color legend-initial"></div>
-          <span>Initial SUDS</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color legend-final"></div>
-          <span>Final SUDS</span>
-        </div>
-      </div>
-    `;
-  }
-
-  // --- BUTTON EVENT ROUTING ---
-  
-  // Welcome -> Recall / TFT Focus
-  document.getElementById('btn-welcome-start').addEventListener('click', () => {
-    state.isSubsequentSet = false;
-    const advCb = document.getElementById('advanced-mode-checkbox');
-    state.advancedMode = advCb ? advCb.checked : false;
-    resetSensoryInputs();
-    
-    if (state.advancedMode) {
-      showScreen('screen-recall');
-    } else {
-      showScreen('screen-tft-focus');
-    }
-  });
-
-  // Recall -> SUDS
-  document.getElementById('btn-recall-focused').addEventListener('click', () => {
-    // Reset SUDS buttons selection
-    const initGrid = document.getElementById('initial-suds-grid');
-    const initBtn = document.getElementById('btn-initial-suds-next');
-    const initIndicator = document.getElementById('initial-suds-indicator');
-    
-    if (initGrid) initGrid.querySelectorAll('.suds-btn').forEach(b => b.classList.remove('selected'));
-    if (initBtn) initBtn.disabled = true;
-    if (initIndicator) initIndicator.textContent = 'Select a distress rating';
-    
-    showScreen('screen-initial-suds');
-  });
-
-  // Initial SUDS Back & Next
-  document.getElementById('btn-initial-suds-back').addEventListener('click', () => {
-    if (state.advancedMode) {
-      showScreen('screen-recall');
-    } else {
-      showScreen('screen-tft-focus');
-    }
-  });
-  
-  document.getElementById('btn-initial-suds-next').addEventListener('click', () => {
-    if (state.isSubsequentSet) {
-      showScreen('screen-tft-focus');
-    } else if (state.advancedMode) {
-      showScreen('screen-sensory-images');
-    } else {
-      showScreen('screen-eft-tapping');
-    }
-  });
-
-  // Sensory Images Back & Next
-  document.getElementById('btn-sensory-images-back').addEventListener('click', () => {
-    showScreen('screen-initial-suds');
-  });
-  document.getElementById('btn-sensory-images-next').addEventListener('click', () => {
-    captureSensoryData();
-    showScreen('screen-sensory-sounds');
-  });
-
-  // Sensory Sounds Back & Next
-  document.getElementById('btn-sensory-sounds-back').addEventListener('click', () => {
-    showScreen('screen-sensory-images');
-  });
-  document.getElementById('btn-sensory-sounds-next').addEventListener('click', () => {
-    captureSensoryData();
-    showScreen('screen-sensory-tactile');
-  });
-
-  // Sensory Tactile Back & Next
-  document.getElementById('btn-sensory-tactile-back').addEventListener('click', () => {
-    showScreen('screen-sensory-sounds');
-  });
-  document.getElementById('btn-sensory-tactile-next').addEventListener('click', () => {
-    captureSensoryData();
-    showScreen('screen-sensory-tastes');
-  });
-
-  // Sensory Tastes Back & Next
-  document.getElementById('btn-sensory-tastes-back').addEventListener('click', () => {
-    showScreen('screen-sensory-tactile');
-  });
-  document.getElementById('btn-sensory-tastes-next').addEventListener('click', () => {
-    captureSensoryData();
-    showScreen('screen-sensory-smells');
-  });
-
-  // Sensory Smells Back & Next
-  document.getElementById('btn-sensory-smells-back').addEventListener('click', () => {
-    showScreen('screen-sensory-tastes');
-  });
-  document.getElementById('btn-sensory-smells-next').addEventListener('click', () => {
-    captureSensoryData();
-    showScreen('screen-tft-focus');
-  });
-
-  // TFT Focus Back & Next
-  document.getElementById('btn-tft-focus-back').addEventListener('click', () => {
-    if (state.isSubsequentSet) {
-      showScreen('screen-summary');
-    } else if (state.advancedMode) {
-      showScreen('screen-sensory-smells');
-    } else {
-      showScreen('screen-welcome');
-    }
-  });
-  document.getElementById('btn-tft-focus-next').addEventListener('click', () => {
-    if (state.isSubsequentSet || state.advancedMode) {
-      showScreen('screen-eft-tapping');
-    } else {
-      // In basic mode, first evaluation happens after TFT Focus
-      if (state.initialSuds === null) {
-        // Reset SUDS buttons selection
-        const initGrid = document.getElementById('initial-suds-grid');
-        const initBtn = document.getElementById('btn-initial-suds-next');
-        const initIndicator = document.getElementById('initial-suds-indicator');
-        
-        if (initGrid) initGrid.querySelectorAll('.suds-btn').forEach(b => b.classList.remove('selected'));
-        if (initBtn) initBtn.disabled = true;
-        if (initIndicator) initIndicator.textContent = 'Select a distress rating';
-        
-        showScreen('screen-initial-suds');
-      } else {
-        showScreen('screen-eft-tapping');
-      }
-    }
-  });
-
-  // EFT Tapping Back & Next
-  document.getElementById('btn-eft-tapping-back').addEventListener('click', () => {
-    if (state.isSubsequentSet || state.advancedMode) {
-      showScreen('screen-tft-focus');
-    } else {
-      showScreen('screen-initial-suds');
-    }
-  });
-  document.getElementById('btn-eft-tapping-next').addEventListener('click', () => {
-    showScreen('screen-9-gamut');
-  });
-
-  // 9 Gamut Back & Next
-  document.getElementById('btn-9-gamut-back').addEventListener('click', () => {
-    showScreen('screen-eft-tapping');
-  });
-  document.getElementById('btn-9-gamut-next').addEventListener('click', () => {
-    showScreen('screen-stimulation');
-    startBilateralStimulation();
-  });
-
-  // Deep Breath Continue -> NLP
-  document.getElementById('btn-deep-breath-continue').addEventListener('click', () => {
-    showScreen('screen-nlp');
-  });
-
-  // NLP Interactive Flow Next Step
-  document.getElementById('btn-nlp-next-step').addEventListener('click', () => {
-    if (state.nlp.currentState === 'color') {
-      state.nlp.currentState = 'grayscale';
-      
-      const projection = document.getElementById('nlp-memory-projection');
-      if (projection) projection.classList.add('grayscale-fade');
-
-      // Switch scene animation from color-fade to shrinking
-      const scene = document.getElementById('nlp-memory-scene');
-      if (scene) {
-        scene.classList.add('scene-shrinking');
-      }
-      
-      const instruction = document.getElementById('nlp-instruction');
-      if (instruction) {
-        instruction.textContent = "Now, through your mental focus, imagine shrinking the black and white image. Picture it moving further away, getting smaller and smaller until it is just a tiny, harmless dot.";
-      }
-      
-      const nextBtn = document.getElementById('btn-nlp-next-step');
-      if (nextBtn) nextBtn.textContent = "I have shrunk it to a dot";
-      
-    } else if (state.nlp.currentState === 'grayscale') {
-      state.nlp.currentState = 'erase';
-      
-      // Fix scene as small grayscale image with fade-out animation
-      const scene = document.getElementById('nlp-memory-scene');
-      if (scene) {
-        scene.classList.remove('scene-shrinking');
-        scene.classList.add('scene-erasing');
-      }
-      
-      const instruction = document.getElementById('nlp-instruction');
-      if (instruction) {
-        instruction.textContent = "Now imagine a large eraser sweeping across this small image, wiping it away completely as it passes...";
-      }
-      
-      const nextBtn = document.getElementById('btn-nlp-next-step');
-      if (nextBtn) nextBtn.style.display = 'none';
-      
-      // Show eraser with automatic sweep animation
-      const eraser = document.getElementById('nlp-eraser-indicator');
-      if (eraser) {
-        eraser.classList.add('auto-sweep');
-      }
-      
-      // After the sweep animation completes, trigger dissolution
-      setTimeout(() => {
-        const canvas = document.getElementById('nlp-canvas');
-        if (canvas && state.nlp.currentState === 'erase') {
-          triggerNlpErasure(canvas.width / 2, canvas.height / 2);
-        }
-      }, 7000);
-    }
-  });
-
-  // NLP Finish -> Post SUDS
-  document.getElementById('btn-nlp-finish').addEventListener('click', () => {
-    // Clear post-suds selections to force a re-evaluation
-    const postGrid = document.getElementById('post-suds-grid');
-    const postBtn = document.getElementById('btn-post-suds-next');
-    const postIndicator = document.getElementById('post-suds-indicator');
-    
-    if (postGrid) postGrid.querySelectorAll('.suds-btn').forEach(b => b.classList.remove('selected'));
-    if (postBtn) postBtn.disabled = true;
-    if (postIndicator) postIndicator.textContent = 'Select your current rating';
-
-    showScreen('screen-post-suds');
-  });
-
-  // Post SUDS Continue
-  document.getElementById('btn-post-suds-next').addEventListener('click', () => {
-    showScreen('screen-summary');
-  });
-
-  // Repeat Session (Start another set)
-  document.getElementById('btn-repeat-session').addEventListener('click', () => {
-    state.isSubsequentSet = true;
-    
-    // Set current post-distress as the new initial reference point
-    state.initialSuds = state.postSuds;
-    state.postSuds = null;
-    
-    showScreen('screen-tft-focus');
-  });
-
-  // Finish Session (Log it)
-  document.getElementById('btn-finish-session').addEventListener('click', () => {
-    showScreen('screen-finish');
-  });
-
-  // Restart app (New session)
-  document.getElementById('btn-restart-app').addEventListener('click', () => {
-    state.isSubsequentSet = false;
-    state.initialSuds = null;
-    state.postSuds = null;
-    state.advancedMode = false;
-    const advCb = document.getElementById('advanced-mode-checkbox');
-    if(advCb) advCb.checked = false;
-    resetSensoryInputs();
-    showScreen('screen-welcome');
-  });
-
-  // Initialize display and listeners immediately
-  renderHistoryList();
-  initTappingListListeners();
-  initNlpListeners();
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const icons = {
+  moon: '<path d="M20.5 13.2A8.5 8.5 0 0 1 10.8 3.5a8.5 8.5 0 1 0 9.7 9.7Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
+  session:
+    '<rect x="4" y="4" width="16" height="16" rx="5"/><path d="M8 12h8m-5-3-3 3 3 3m2-6 3 3-3 3"/>',
+  chart: '<path d="M4 4v16h16M8 15v-4m5 4V7m5 8V4"/>',
+  book: '<path d="M12 5v15M3 4c4-1 6 0 9 2 3-2 5-3 9-2v14c-4-1-6 0-9 2-3-2-5-3-9-2Z"/>',
+  lock: '<rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2l-1.5 1v1m0 3h.01"/>',
+  arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+  play: '<path d="m8 4 12 8-12 8Z"/>',
+  pause: '<path d="M8 5v14m8-14v14"/>',
+  expand: '<path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5"/>',
+  check: '<path d="m5 12 4 4L19 6"/>',
+  sliders:
+    '<path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>',
+};
+const icon = (n) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[n] || icons.info}</svg>`;
+const esc = (v) =>
+  String(v).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+const KEY = "emdr_session_history";
+const themeMedia = matchMedia("(prefers-color-scheme: dark)");
+let explicitTheme = null;
+try {
+  const savedTheme = localStorage.getItem("emdr_theme");
+  if (["light", "dark"].includes(savedTheme)) explicitTheme = savedTheme;
+} catch {}
+function applyTheme(theme) {
+  const dark = theme === "dark";
+  document.documentElement.dataset.theme = theme;
+  $('meta[name="theme-color"]').content = dark ? "#10131c" : "#f7f8fc";
+  $("#theme-toggle").setAttribute("aria-pressed", String(dark));
+  $("#theme-toggle").setAttribute(
+    "aria-label",
+    dark ? "Switch to light mode" : "Switch to dark mode",
+  );
+  $("#theme-label").textContent = dark ? "Light mode" : "Dark mode";
+  $("#theme-icon").innerHTML = icon(dark ? "sun" : "moon");
+}
+themeMedia.addEventListener("change", (event) => {
+  if (!explicitTheme) applyTheme(event.matches ? "dark" : "light");
 });
+applyTheme(explicitTheme || (themeMedia.matches ? "dark" : "light"));
+const steps = [
+  "Preparation",
+  "Check-in",
+  "Stimulation",
+  "Breathing",
+  "Reflection",
+];
+const sensory = [
+  ["images", "Images", "What images do you notice?"],
+  ["sounds", "Sounds", "What sounds do you remember?"],
+  ["tactile", "Body", "What sensations do you notice in your body?"],
+  ["tastes", "Tastes", "Do you notice a particular taste?"],
+  ["smells", "Smells", "Do you notice a particular smell?"],
+];
+const tapping = [
+  [
+    "Side of hand",
+    "karate chop.jpg",
+    "The outer edge of your hand, below your little finger.",
+  ],
+  ["Top of head", "Top head.jpg", "The centre of the top of your head."],
+  ["Eyebrow", "eyebrows.jpg", "The start of your eyebrow, near your nose."],
+  [
+    "Side of eye",
+    "side eye.jpg",
+    "The bone beside the outer corner of your eye.",
+  ],
+  [
+    "Under eye",
+    "under eye.jpg",
+    "The bone directly below the centre of your eye.",
+  ],
+  [
+    "Under nose",
+    "under nose.jpg",
+    "The space between your nose and upper lip.",
+  ],
+  ["Chin", "chin point.jpg", "The crease between your lower lip and chin."],
+  ["Collarbone", "collarbone.jpg", "The area just below your collarbone."],
+  ["Under arm", "under arm.jpg", "The side of your chest, below your armpit."],
+];
+const gamut = [
+  "Open your eyes.",
+  "Close your eyes.",
+  "Open your eyes and look down to the left, keeping your head still.",
+  "Look down to the right.",
+  "Move your eyes in a circle.",
+  "Repeat the circle in the opposite direction.",
+  "Hum a few notes.",
+  "Count from 1 to 5, then from 5 to 1.",
+  "Hum again.",
+];
+const state = {
+  view: "home",
+  route: "prepare",
+  active: false,
+  duration: 90,
+  speed: 3,
+  sound: false,
+  advanced: false,
+  pattern: "dynamic",
+  initial: null,
+  final: null,
+  set: 1,
+  sensory: {},
+  sensoryIndex: 0,
+  tap: 0,
+  gamut: [],
+  reflect: 0,
+  saved: false,
+  history: [],
+  storageMessage: "",
+};
+let frame = 0,
+  lastTime = null,
+  elapsed = 0,
+  previewElapsed = 0,
+  previewAngle = 0,
+  angle = 0,
+  running = false,
+  preview = false,
+  breathTime = 0,
+  audioContext = null,
+  toastTimeout,
+  trackerWidth = 0;
+const observer = new ResizeObserver((entries) => {
+  trackerWidth = entries[0].contentRect.width;
+});
+function readHistory() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) || "[]");
+    if (!Array.isArray(raw)) throw Error();
+    state.history = raw
+      .filter(
+        (x) =>
+          x &&
+          typeof x.date === "string" &&
+          x.date.length < 150 &&
+          Number.isInteger(x.initial) &&
+          x.initial >= 1 &&
+          x.initial <= 10 &&
+          Number.isInteger(x.final) &&
+          x.final >= 1 &&
+          x.final <= 10,
+      )
+      .slice(0, 20);
+  } catch {
+    state.history = [];
+    state.storageMessage =
+      "Your local journal is unavailable or could not be read. You can still use the session.";
+  }
+}
+readHistory();
+function toast(message) {
+  clearTimeout(toastTimeout);
+  $("#toast").textContent = message;
+  $("#toast").classList.add("visible");
+  toastTimeout = setTimeout(
+    () => $("#toast").classList.remove("visible"),
+    5000,
+  );
+}
+function modal(title, body) {
+  $("#dialog-content").innerHTML = `<h2 id="dialog-title">${title}</h2>${body}`;
+  $("#dialog").setAttribute("aria-labelledby", "dialog-title");
+  $("#dialog").showModal();
+}
+function stopMotion() {
+  cancelAnimationFrame(frame);
+  frame = 0;
+  lastTime = null;
+  running = false;
+  preview = false;
+  observer.disconnect();
+}
+function clearSession() {
+  Object.assign(state, {
+    active: false,
+    route: "prepare",
+    initial: null,
+    final: null,
+    set: 1,
+    sensory: {},
+    sensoryIndex: 0,
+    tap: 0,
+    gamut: [],
+    reflect: 0,
+    saved: false,
+  });
+  elapsed = 0;
+  angle = 0;
+}
+function stepIndex() {
+  return (
+    {
+      prepare: 0,
+      before: 1,
+      sensory: 1,
+      tapping: 1,
+      gamut: 1,
+      stimulation: 2,
+      breath: 3,
+      reflection: 4,
+      after: 4,
+      summary: 4,
+      finish: 4,
+    }[state.route] || 0
+  );
+}
+function header(title, desc, kicker = "YOUR SESSION") {
+  return `<div class="step-heading"><div class="eyebrow">${kicker}</div><h1>${title}</h1><p>${desc}</p></div>`;
+}
+function button(label, action, primary = false, extra = "") {
+  return `<button class="button ${primary ? "primary" : "secondary"}" data-action="${action}" ${extra}>${label}${primary ? icon("arrow") : ""}</button>`;
+}
+function actions(back, next, label = "Continue", disabled = false) {
+  return `<div class="step-actions">${back ? button("Back", back) : ""}<button class="text-button end-action" data-action="end">Finish here</button>${button(label, next, true, disabled ? "disabled" : "")}</div>`;
+}
+function notice() {
+  return `<div class="notice">${icon("info")}<p><strong>A support tool, not a therapy.</strong> EMDR is delivered by a qualified professional. Discuss these exercises with your therapist and stop if your distress increases.</p></div>`;
+}
+function formatTime(seconds) {
+  const s = Math.max(0, Math.ceil(seconds));
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+function tracker(isPreview) {
+  return `<div class="tracker" id="tracker"><div class="tracker-meta"><span>${isPreview ? "BILATERAL STIMULATION" : `SET ${String(state.set).padStart(2, "0")}`}</span><span class="timer" id="timer">${isPreview ? "PREVIEW" : formatTime(state.duration - elapsed / 1000)}</span></div><div class="track-line"></div><div class="track-dot" id="track-dot" aria-hidden="true"></div><div class="tracker-caption" id="tracker-caption">${isPreview ? "One movement. One point of focus." : "Follow the point with your eyes, keeping your head still."}</div>${isPreview ? "" : '<div class="stim-progress"><div class="stim-progress-fill" id="stim-progress"></div></div>'}</div>`;
+}
+function speedLabel() {
+  return ["Very slow", "Slow", "Moderate", "Fast", "Very fast"][
+    state.speed - 1
+  ];
+}
+function home() {
+  return `<div class="intro"><div><div class="eyebrow">A SPACE FOR YOU</div><h1>Your space.<br>Your <em>pace.</em></h1><p>Take a moment. Find a comfortable position.<br>Your session starts here.</p></div><div class="intro-actions"><span class="private-badge">${icon("lock")} Private, on your device</span>${button(state.active ? "Resume your session" : "Prepare your session", state.active ? "resume-session" : "start", true)}</div></div><div class="dashboard"><section class="card"><div class="card-head"><h2>A point to focus on</h2><span class="small-label">01 — 05</span></div>${tracker(true)}<div class="preview-footer"><p>Try the movement before you begin.</p><button class="preview-button" data-action="preview" id="preview-button">${icon("play")} Try for 10 seconds</button></div></section><section class="card settings" aria-labelledby="settings-title"><h2 id="settings-title">Set your pace</h2><div class="field"><div class="field-label" id="duration-label">Set duration <output id="duration-value">${state.duration} seconds</output></div><div class="segmented" role="group" aria-labelledby="duration-label">${[30, 60, 90].map((n) => `<button class="${state.duration === n ? "selected" : ""}" data-action="duration" data-value="${n}" aria-pressed="${state.duration === n}">${n} sec</button>`).join("")}</div></div><div class="field"><label class="field-label" for="speed">Speed <output id="speed-value">${speedLabel()}</output></label><input type="range" id="speed" min="1" max="5" value="${state.speed}" aria-valuetext="${speedLabel()}"><div class="range-labels"><span>Slower</span><span>Faster</span></div></div><label class="switch-row" for="sound"><span>End-of-set sound<small>A gentle signal when the set ends</small></span><input id="sound" type="checkbox" class="switch" ${state.sound ? "checked" : ""}></label><label class="switch-row" for="pattern"><span>Variable pace<small>Gradual changes in movement</small></span><input id="pattern" type="checkbox" class="switch" ${state.pattern === "dynamic" ? "checked" : ""}></label></section></div><label class="mode-card" for="advanced"><span class="mode-icon">${icon("sliders")}</span><span class="mode-copy"><strong>Sensory exploration</strong><p>Take a moment to note images, sounds and sensations.</p></span><input type="checkbox" class="switch" id="advanced" ${state.advanced ? "checked" : ""}></label><div class="start-row"><small>At your pace. You can stop at any time.</small></div>${notice()}`;
+}
+function render(focus = true) {
+  stopMotion();
+  const nav = ["history", "guide"].includes(state.view) ? state.view : "home";
+  ["home", "history", "guide"].forEach((v) => {
+    const el = $(`#nav-${v}`);
+    el.classList.toggle("active", v === nav);
+    if (v === nav) el.setAttribute("aria-current", "page");
+    else el.removeAttribute("aria-current");
+  });
+  $("#breadcrumb").innerHTML =
+    `Your space <span class="slash">/</span> <strong>${{ history: "Session journal", guide: "User guide" }[state.view] || "Your session"}</strong>`;
+  $("#journey").innerHTML = steps
+    .map(
+      (s, i) =>
+        `<li class="journey-item ${i === stepIndex() ? "current" : i < stepIndex() ? "done" : ""}" ${i === stepIndex() ? 'aria-current="step"' : ""}><span class="journey-number">${i < stepIndex() ? "✓" : String(i + 1).padStart(2, "0")}</span>${s}</li>`,
+    )
+    .join("");
+  $("#main").innerHTML =
+    state.view === "home"
+      ? home()
+      : state.view === "history"
+        ? historyView()
+        : state.view === "guide"
+          ? guideView()
+          : sessionView();
+  document
+    .querySelectorAll("[data-icon]")
+    .forEach((el) => (el.innerHTML = icon(el.dataset.icon)));
+  if ($("#tracker")) {
+    trackerWidth = $("#tracker").clientWidth;
+    observer.observe($("#tracker"));
+    if (
+      state.view === "session" &&
+      state.route === "stimulation" &&
+      elapsed > 0
+    ) {
+      const x =
+        Math.sin(angle) *
+        Math.max(0, trackerWidth * 0.4 - 16) *
+        Math.min(elapsed / 1500, 1);
+      $("#track-dot").style.transform = `translate3d(${x}px,0,0)`;
+      $("#stim-progress").style.transform =
+        `scaleX(${Math.min(1, elapsed / (state.duration * 1000))})`;
+    }
+  }
+  if (state.view === "session" && state.route === "breath") {
+    breathTime = 0;
+    startBreath();
+  }
+  if (focus) {
+    $("#main").focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+}
+function go(route) {
+  state.route = route;
+  state.view = "session";
+  render();
+}
+function sessionView() {
+  switch (state.route) {
+    case "prepare":
+      return (
+        header(
+          "Before you begin.",
+          "Give yourself this moment. There is no rush.",
+          "01 / PREPARATION",
+        ) +
+        `<section class="card step-card"><h2>Find a quiet place</h2><p>Sit comfortably, rest your feet on the floor and make sure you will not be interrupted. You can go back or finish whenever you wish.</p><h3>One topic at a time</h3><p>Bring your attention to the topic agreed with your therapist. Notice what you feel without forcing yourself to relive the experience.</p><details class="guide-section"><summary>Complementary exercises from the original project</summary><p>The project also includes EFT/TFT tapping, 9 Gamut and visualisation. These are separate from EMDR and can be skipped in the following steps.</p></details>${notice()}${actions("home", "before", "Check in with myself")}</section>`
+      );
+    case "before":
+    case "after": {
+      const after = state.route === "after",
+        value = after ? state.final : state.initial;
+      return (
+        header(
+          after ? "How do you feel now?" : "Check in with yourself.",
+          after
+            ? "Notice your level of distress right now. Every answer is valid."
+            : "How much distress do you feel right now, on a scale of 1 to 10?",
+          after ? "05 / REFLECTION" : "02 / CHECK-IN",
+        ) +
+        `<section class="card step-card"><h2>Your level of distress</h2><div class="rating-grid" role="group" aria-label="Distress level from 1 to 10">${Array.from({ length: 10 }, (_, i) => `<button class="rating ${value === i + 1 ? "selected" : ""}" data-action="rate" data-value="${i + 1}" aria-pressed="${value === i + 1}">${i + 1}</button>`).join("")}</div><div class="scale-ends"><span>1 · Lowest</span><span>10 · Highest</span></div><p class="rating-note" id="rating-note" role="status">${value ? `You selected ${value} out of 10` : "Choose the number that feels closest."}</p>${actions(after ? "reflection" : "prepare", after ? "summary" : "rated", "Continue", value === null)}</section>`
+      );
+    }
+    case "sensory": {
+      const [key, , prompt] = sensory[state.sensoryIndex];
+      return (
+        header(
+          "Make room for sensations.",
+          "Notes are optional and stay only in this page’s memory.",
+          "02 / CHECK-IN",
+        ) +
+        `<section class="card step-card"><div class="sensory-tabs" role="group" aria-label="Senses">${sensory.map((s, i) => `<button class="chip ${i === state.sensoryIndex ? "selected" : ""}" data-action="sense" data-value="${i}" aria-pressed="${i === state.sensoryIndex}">${s[1]}</button>`).join("")}</div><label for="sensory-note">${prompt}</label><textarea id="sensory-note" placeholder="Write only what you feel comfortable sharing…" maxlength="5000">${esc(state.sensory[key] || "")}</textarea><p class="hint">No personal descriptions are saved in your journal.</p>${actions("sense-back", "sense-next", state.sensoryIndex === 4 ? "Continue" : "Next sense")}</section>`
+      );
+    }
+    case "tapping":
+      return (
+        header(
+          "A moment for tapping.",
+          "EFT / TFT · Optional complementary exercise.",
+          "02 / CHECK-IN",
+        ) +
+        `<section class="card step-card"><p>If agreed with your therapist, gently tap each point 15 times at your own pace, with your thumb, index and middle fingers together.</p><div class="tapping-layout"><div><img id="tapping-image" class="tapping-image" src="assets/EFT%20points/${encodeURIComponent(tapping[state.tap][1])}" alt="${tapping[state.tap][0]}" width="320" height="280"><p class="tap-description" id="tap-description">${tapping[state.tap][2]}</p></div><div class="tapping-list" role="group" aria-label="Tapping points">${tapping.map((p, i) => `<button class="${state.tap === i ? "selected" : ""}" data-action="tap" data-value="${i}" aria-pressed="${state.tap === i}"><span>${String(i + 1).padStart(2, "0")}</span>${p[0]}</button>`).join("")}</div></div>${actions(state.advanced ? "sensory" : "before", "gamut", "Continue")}<button class="text-button" data-action="stimulation">Skip complementary exercises</button></section>`
+      );
+    case "gamut":
+      return (
+        header(
+          "The 9 Gamut sequence.",
+          "TFT · Optional complementary exercise.",
+          "02 / CHECK-IN",
+        ) +
+        `<section class="card step-card"><p>If this is part of your agreed plan, gently tap the back of your hand between the knuckles of your ring and little fingers during the sequence.</p><div class="gamut-list">${gamut.map((g, i) => `<label><input type="checkbox" data-gamut="${i}" ${state.gamut[i] ? "checked" : ""}><span>${i + 1}. ${g}</span></label>`).join("")}</div>${actions("tapping", "stimulation", "Continue to stimulation")}<p class="hint">You do not need to complete the sequence to continue.</p></section>`
+      );
+    case "stimulation":
+      return (
+        header(
+          "One point at a time.",
+          "Start when you are ready. You can pause or end the set at any time.",
+          "03 / STIMULATION",
+        ) +
+        `<section class="stim-stage" id="stim-stage">${tracker(false)}<div class="stim-controls"><button class="button primary" data-action="toggle-stim" id="toggle-stim">${icon("play")} ${elapsed ? "Resume" : "Start the set"}</button>${button("End the set", "end-set")}<button class="button secondary" data-action="fullscreen" aria-label="Fullscreen">${icon("expand")}</button></div><p class="hint" style="text-align:center;margin-top:16px" id="stim-hint">Space: pause or resume · Esc: pause</p><details class="guide-section butterfly-guide"><summary>Butterfly Hug · optional</summary><p>If agreed with your therapist, cross your arms over your chest, rest your hands on your shoulders or upper arms, and alternate gentle taps on each side. You can also choose to follow only the point.</p></details></section>`
+      );
+    case "breath":
+      return (
+        header(
+          "Pause. Breathe.",
+          "Follow the rhythm only if it feels comfortable, or breathe naturally.",
+          "04 / BREATHING",
+        ) +
+        `<section class="card step-card"><div class="breath-area"><div class="breath-circle" id="breath-circle"><div><strong id="breath-label">Breathe in</strong><small id="breath-count">4 seconds</small></div></div></div><p class="hint" id="breath-cycle" style="text-align:center" role="status">Breath 1 of 3</p>${actions(null, "reflection", "Continue when ready")}</section>`
+      );
+    case "reflection": {
+      const texts = [
+          [
+            "Notice.",
+            "Notice any images, thoughts or sensations without judging them.",
+          ],
+          [
+            "Change perspective.",
+            "If this visualisation is part of your agreed plan, imagine the scene in black and white.",
+          ],
+          [
+            "Take some distance.",
+            "Imagine the scene smaller and further away, if that feels comfortable.",
+          ],
+          [
+            "Return to the present.",
+            "Let go of the visualisation and bring your attention back to the room.",
+          ],
+        ],
+        t = texts[state.reflect];
+      return (
+        header(
+          "Make room for what is here.",
+          "A brief moment to notice before checking in again.",
+          "05 / REFLECTION",
+        ) +
+        `<section class="card step-card"><div class="reflection"><strong>${t[0]}</strong><p style="margin:16px auto 0;max-width:450px">${t[1]}</p></div><p class="hint" style="margin-top:22px">Visualisation is optional. It does not erase memories or measure an outcome.</p>${state.reflect < 3 ? button("Continue the visualisation", "reflect-next") : ""}${actions(null, "after", "Check how you feel")}</section>`
+      );
+    }
+    case "summary":
+      return (
+        header(
+          "Your moment, in perspective.",
+          "These numbers reflect how you feel, not a clinical outcome.",
+          "05 / REFLECTION",
+        ) +
+        `<section class="card step-card"><h2>Set summary · ${state.set}</h2><div class="summary-points"><div class="summary-point"><p>Before the set</p><strong>${state.initial}</strong><small> / 10</small></div><div class="summary-point"><p>After the set</p><strong>${state.final}</strong><small> / 10</small></div></div><p>${state.final > state.initial ? "You reported greater distress. You can stop and discuss it with your therapist." : state.final === state.initial ? "Your reported level is unchanged. There is no need to force a change." : "You reported less distress than at the start of this set. Take the time you need."}</p><div class="step-actions">${button("Another set", "repeat")}${button("Finish and save", "finish", true)}</div><p class="hint" style="margin-top:18px">We save only dates and ratings, for up to 20 sets, in this browser.</p></section>`
+      );
+    case "finish":
+      return (
+        header(
+          "Take your time today.",
+          "Your session is complete. Come back whenever you wish.",
+          "SESSION COMPLETE",
+        ) +
+        `<section class="card step-card"><div class="empty-mark">${icon("check")}</div><h2 style="text-align:center">You are here again.</h2><p style="text-align:center">Notice your surroundings and give yourself a break before returning to your day.</p>${state.storageMessage ? `<p role="status">${esc(state.storageMessage)}</p>` : ""}<div class="step-actions">${button("Open your journal", "history")}${button("Back to your space", "new", true)}</div></section>`
+      );
+    default:
+      return home();
+  }
+}
+function historyView() {
+  return (
+    header(
+      "Your moments, over time.",
+      "Your journal stays in this browser and keeps ratings from your last 20 sets.",
+      "SESSION JOURNAL",
+    ) +
+    `<section class="card step-card">${state.storageMessage ? `<p role="status">${esc(state.storageMessage)}</p>` : ""}${
+      !state.history.length
+        ? `<div class="history-empty"><div class="empty-mark">${icon("chart")}</div><h2>Your journal starts here.</h2><p>After a session, you will find your ratings here.</p>${button(state.active ? "Resume your session" : "Prepare your session", state.active ? "resume-session" : "start", true)}</div>`
+        : `<h2>Before and after each set</h2><div class="legend"><span>Before</span><span>After</span></div><div class="history-chart" role="img" aria-label="Chart of distress levels before and after each set. Full values are in the table below.">${[
+            ...state.history,
+          ]
+            .reverse()
+            .map(
+              (h, i) =>
+                `<div class="chart-group"><div class="chart-bars"><i style="--bar:${h.initial * 13}px"></i><i style="--bar:${h.final * 13}px"></i></div><span>${i + 1}</span></div>`,
+            )
+            .join(
+              "",
+            )}</div><div class="table-wrap"><table><caption class="hint">Saved sets, most recent first</caption><thead><tr><th>Date</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>${state.history.map((h) => `<tr><td>${esc(h.date)}</td><td>${h.initial} / 10</td><td>${h.final} / 10</td><td>${h.final - h.initial > 0 ? "+" : ""}${h.final - h.initial}</td></tr>`).join("")}</tbody></table></div><div class="step-actions"><span class="hint">Personal data, stored on your device.</span><button class="text-button" data-action="clear-history">Clear journal</button></div>`
+    }</section>`
+  );
+}
+function guideView() {
+  return (
+    header(
+      "A few things before you begin.",
+      "How to use this space and manage your sessions.",
+      "USER GUIDE",
+    ) +
+    `<section class="card step-card"><div class="guide-section"><h2>A tool to support your journey</h2><p>This app is not a therapy and does not diagnose conditions. EMDR is delivered by a qualified professional. Agree suitable exercises and settings with your therapist.</p><a href="https://www.nhs.uk/tests-and-treatments/talking-therapies/" target="_blank" rel="noopener noreferrer">Learn more: NHS, talking therapies ↗</a></div><div class="guide-section"><h2>Your session in five steps</h2><ol><li>Settle into a quiet environment.</li><li>Rate your distress from 1 to 10. Sensory notes are optional.</li><li>Start the movement only when you are ready.</li><li>Take a break with the breathing guide, or follow your own rhythm.</li><li>Check how you feel again and decide whether to save the set.</li></ol></div><div class="guide-section"><h2>You stay in control</h2><p>Choose the duration and speed before starting. During a set, use Pause, the space bar or Esc. The movement pauses automatically when you switch tabs. The initial preview lasts 10 seconds and is not saved.</p></div><div class="guide-section"><h2>Complementary exercises</h2><p>EFT/TFT tapping, 9 Gamut and visualisation come from the original project. They are presented separately and can be skipped. They are not a complete clinical EMDR protocol, and visualisation does not erase memories.</p></div><div class="guide-section"><h2>Your data</h2><p>Sensory descriptions stay in memory only while this page is open. Your journal stores only dates and ratings, without sending them to a server. Local data is not encrypted: anyone with access to this browser profile can read it. We will let you know if saving is unavailable.</p><p>Existing journal entries are compatible. Any descriptions saved by the previous version are removed the next time you save. You can clear the entire journal at any time.</p></div>${button(state.active ? "Resume your session" : "Back to your session", state.active ? "resume-session" : "home", true)}</section>`
+  );
+}
+// Audio is initialized by a gesture and reused; completed oscillators are disconnected.
+function unlockAudio() {
+  if (!state.sound) return;
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) throw Error();
+    audioContext ||= new C();
+    if (audioContext.state === "suspended")
+      audioContext
+        .resume()
+        .catch(() =>
+          toast("Audio is unavailable. The timer will keep working."),
+        );
+  } catch {
+    toast("Audio is unavailable in this browser.");
+  }
+}
+function chime() {
+  if (!state.sound || !audioContext || audioContext.state !== "running") return;
+  try {
+    const osc = audioContext.createOscillator(),
+      gain = audioContext.createGain(),
+      now = audioContext.currentTime;
+    osc.frequency.value = 660;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.75);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.8);
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
+  } catch {}
+}
+function startMotion(isPreview) {
+  cancelAnimationFrame(frame);
+  preview = isPreview;
+  running = true;
+  lastTime = null;
+  if (isPreview) {
+    previewElapsed = 0;
+    previewAngle = 0;
+  }
+  unlockAudio();
+  if (!isPreview) updateStimButton();
+  else $("#preview-button").innerHTML = `${icon("pause")} Stop preview`;
+  frame = requestAnimationFrame(animate);
+}
+function animate(timestamp) {
+  if (!running) return;
+  if (lastTime === null) lastTime = timestamp;
+  const delta = timestamp - lastTime;
+  lastTime = timestamp;
+  if (preview) previewElapsed += delta;
+  else elapsed += delta;
+  const activeElapsed = preview ? previewElapsed : elapsed;
+  const duration = (preview ? 10 : state.duration) * 1000;
+  if (activeElapsed >= duration) {
+    if (preview) {
+      stopMotion();
+      render(false);
+    } else {
+      elapsed = duration;
+      chime();
+      endSet();
+    }
+    return;
+  }
+  const variation =
+    state.pattern === "dynamic" ? 1 + 0.25 * Math.sin(activeElapsed / 4500) : 1;
+  const angleDelta =
+    (Math.min(delta, 100) / 1000) *
+    Math.PI *
+    (0.25 + state.speed * 0.16) *
+    variation;
+  if (preview) previewAngle += angleDelta;
+  else angle += angleDelta;
+  const ramp = Math.min(activeElapsed / 1500, 1),
+    x =
+      Math.sin(preview ? previewAngle : angle) *
+      Math.max(0, trackerWidth * 0.4 - 16) *
+      ramp;
+  $("#track-dot").style.transform = `translate3d(${x}px,0,0)`;
+  if (!preview) {
+    const text = formatTime(state.duration - elapsed / 1000);
+    if ($("#timer").textContent !== text) $("#timer").textContent = text;
+    $("#stim-progress").style.transform = `scaleX(${elapsed / duration})`;
+  }
+  frame = requestAnimationFrame(animate);
+}
+function updateStimButton() {
+  const el = $("#toggle-stim");
+  if (el)
+    el.innerHTML = `${icon(running ? "pause" : "play")} ${running ? "Pause" : elapsed ? "Resume" : "Start the set"}`;
+  const c = $("#tracker-caption");
+  if (c)
+    c.textContent = running
+      ? "Follow the point with your eyes."
+      : "Paused. Resume only when you are ready.";
+}
+function pause() {
+  if (!running) return;
+  if (preview) {
+    stopMotion();
+    render(false);
+    return;
+  }
+  cancelAnimationFrame(frame);
+  frame = 0;
+  running = false;
+  lastTime = null;
+  updateStimButton();
+}
+function endSet() {
+  stopMotion();
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  go("breath");
+}
+function startBreath() {
+  lastTime = null;
+  function tick(t) {
+    if (state.route !== "breath" || state.view !== "session") return;
+    if (lastTime === null) lastTime = t;
+    breathTime += t - lastTime;
+    lastTime = t;
+    const phase = (breathTime % 16000) / 1000;
+    let label, seconds, scale;
+    if (breathTime >= 48000) {
+      $("#breath-label").textContent = "At your pace";
+      $("#breath-count").textContent = "Breathe naturally";
+      $("#breath-cycle").textContent = "Three breaths complete";
+      $("#breath-circle").style.setProperty("--breath-scale", "1");
+      return;
+    }
+    if (phase < 4) {
+      label = "Breathe in";
+      seconds = 4 - phase;
+      scale = 0.9 + (0.2 * phase) / 4;
+    } else if (phase < 8) {
+      label = "Hold";
+      seconds = 8 - phase;
+      scale = 1.1;
+    } else {
+      label = "Breathe out";
+      seconds = 16 - phase;
+      scale = 1.1 - (0.2 * (phase - 8)) / 8;
+    }
+    $("#breath-label").textContent = label;
+    $("#breath-count").textContent = `${Math.ceil(seconds)} seconds`;
+    $("#breath-circle").style.setProperty("--breath-scale", scale);
+    const cycle = `Breath ${Math.floor(breathTime / 16000) + 1} of 3`;
+    if ($("#breath-cycle").textContent !== cycle)
+      $("#breath-cycle").textContent = cycle;
+    frame = requestAnimationFrame(tick);
+  }
+  frame = requestAnimationFrame(tick);
+}
+function saveSet() {
+  if (state.saved || state.initial === null || state.final === null) return;
+  const record = {
+    date: new Date().toLocaleString("en-GB", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }),
+    initial: state.initial,
+    final: state.final,
+  };
+  state.history = [
+    record,
+    ...state.history.map((h) => ({
+      date: h.date,
+      initial: h.initial,
+      final: h.final,
+    })),
+  ].slice(0, 20);
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state.history));
+    state.storageMessage = "";
+  } catch {
+    state.storageMessage =
+      "Your browser did not allow saving. Your summary is available only while this page stays open.";
+    toast(state.storageMessage);
+  }
+  state.saved = true;
+}
+function handleAction(action, el) {
+  switch (action) {
+    case "theme":
+      explicitTheme =
+        document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(explicitTheme);
+      try {
+        localStorage.setItem("emdr_theme", explicitTheme);
+      } catch {
+        toast(
+          "Theme changed for this visit. Your browser could not save the preference.",
+        );
+      }
+      break;
+    case "home":
+    case "history":
+    case "guide":
+      state.view = action;
+      render();
+      break;
+    case "resume-session":
+      state.view = "session";
+      render();
+      break;
+    case "start":
+      stopMotion();
+      clearSession();
+      state.active = true;
+      go("prepare");
+      break;
+    case "new":
+      clearSession();
+      state.view = "home";
+      render();
+      break;
+    case "duration":
+      state.duration = Number(el.dataset.value);
+      render(false);
+      break;
+    case "preview":
+      if (running && preview) {
+        stopMotion();
+        render(false);
+      } else startMotion(true);
+      break;
+    case "rate": {
+      const val = Number(el.dataset.value);
+      state[state.route === "after" ? "final" : "initial"] = val;
+      document.querySelectorAll(".rating").forEach((b) => {
+        const selected = Number(b.dataset.value) === val;
+        b.classList.toggle("selected", selected);
+        b.setAttribute("aria-pressed", selected);
+      });
+      $("#rating-note").textContent = `You selected ${val} out of 10`;
+      $(".step-actions .primary").disabled = false;
+      break;
+    }
+    case "rated":
+      go(state.advanced ? "sensory" : "tapping");
+      break;
+    case "sense":
+      state.sensoryIndex = Number(el.dataset.value);
+      render(false);
+      $(".chip.selected").focus();
+      break;
+    case "sense-back":
+      if (state.sensoryIndex > 0) {
+        state.sensoryIndex--;
+        render();
+      } else go("before");
+      break;
+    case "sense-next":
+      if (state.sensoryIndex < 4) {
+        state.sensoryIndex++;
+        render();
+      } else go("tapping");
+      break;
+    case "tap":
+      state.tap = Number(el.dataset.value);
+      $("#tapping-image").src =
+        `assets/EFT%20points/${encodeURIComponent(tapping[state.tap][1])}`;
+      $("#tapping-image").alt = tapping[state.tap][0];
+      $("#tap-description").textContent = tapping[state.tap][2];
+      document.querySelectorAll('[data-action="tap"]').forEach((b) => {
+        const selected = Number(b.dataset.value) === state.tap;
+        b.classList.toggle("selected", selected);
+        b.setAttribute("aria-pressed", selected);
+      });
+      break;
+    case "stimulation":
+      elapsed = 0;
+      angle = 0;
+      go("stimulation");
+      break;
+    case "toggle-stim":
+      if (running) pause();
+      else startMotion(false);
+      break;
+    case "end-set":
+      endSet();
+      break;
+    case "fullscreen": {
+      const stage = $("#stim-stage");
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else if (stage.requestFullscreen)
+        stage
+          .requestFullscreen()
+          .catch(() =>
+            toast("Fullscreen is unavailable. You can continue on this page."),
+          );
+      else toast("Fullscreen is unavailable in this browser.");
+      break;
+    }
+    case "reflect-next":
+      state.reflect = Math.min(3, state.reflect + 1);
+      render();
+      break;
+    case "repeat":
+      saveSet();
+      state.initial = state.final;
+      state.final = null;
+      state.saved = false;
+      state.set++;
+      state.reflect = 0;
+      state.gamut = [];
+      state.tap = 0;
+      elapsed = 0;
+      go("tapping");
+      break;
+    case "finish":
+      saveSet();
+      state.active = false;
+      state.sensory = {};
+      go("finish");
+      break;
+    case "end":
+      modal(
+        "Finish here?",
+        `<p>The current set will not be saved. Previously saved sets will remain in your journal.</p><button class="button primary" data-action="confirm-end">Finish session</button>`,
+      );
+      break;
+    case "confirm-end":
+      $("#dialog").close();
+      state.active = false;
+      state.sensory = {};
+      go("finish");
+      break;
+    case "privacy":
+      modal(
+        "Private, on your device.",
+        `<p>Your journal contains dates and ratings for up to 20 sets. New sensory notes stay only in memory and are not saved. No session data is sent to a server.</p><p>Your local journal is not encrypted and can be accessed from this browser profile. You can clear it in the Journal section. External links open sites with their own privacy policies.</p>`,
+      );
+      break;
+    case "clear-history":
+      modal(
+        "Clear your journal?",
+        `<p>This removes the sets saved in this browser. It cannot be undone.</p><button class="button primary" data-action="confirm-clear">Delete permanently</button>`,
+      );
+      break;
+    case "confirm-clear":
+      try {
+        localStorage.removeItem(KEY);
+        state.history = [];
+        state.storageMessage = "";
+        $("#dialog").close();
+        render();
+        toast("Your journal has been cleared.");
+      } catch {
+        toast("Your browser did not allow the journal to be cleared.");
+      }
+      break;
+    default:
+      if (
+        [
+          "prepare",
+          "before",
+          "tapping",
+          "gamut",
+          "reflection",
+          "after",
+          "summary",
+        ].includes(action)
+      )
+        go(action);
+  }
+}
+// A single delegated listener per event type survives view changes without duplication.
+document.addEventListener("click", (event) => {
+  const el = event.target.closest("[data-action]");
+  if (!el) return;
+  event.preventDefault();
+  if (!el.disabled) handleAction(el.dataset.action, el);
+});
+document.addEventListener("input", (event) => {
+  const el = event.target;
+  if (el.id === "speed") {
+    state.speed = Number(el.value);
+    $("#speed-value").textContent = speedLabel();
+    el.setAttribute("aria-valuetext", speedLabel());
+  }
+  if (el.id === "sensory-note")
+    state.sensory[sensory[state.sensoryIndex][0]] = el.value;
+});
+document.addEventListener("change", (event) => {
+  const el = event.target;
+  if (el.id === "sound") {
+    state.sound = el.checked;
+    if (state.sound) {
+      unlockAudio();
+      setTimeout(chime, 100);
+    }
+  }
+  if (el.id === "pattern") state.pattern = el.checked ? "dynamic" : "constant";
+  if (el.id === "advanced") state.advanced = el.checked;
+  if (el.dataset.gamut !== undefined)
+    state.gamut[Number(el.dataset.gamut)] = el.checked;
+});
+$("#dialog-close").addEventListener("click", () => $("#dialog").close());
+document.addEventListener("keydown", (event) => {
+  if (
+    $("#dialog").open ||
+    state.view !== "session" ||
+    state.route !== "stimulation"
+  )
+    return;
+  if (event.key === "Escape") {
+    pause();
+    return;
+  }
+  if (
+    event.code === "Space" &&
+    !event.repeat &&
+    !event.target.closest("button,input,textarea,select,a,summary")
+  ) {
+    event.preventDefault();
+    if (running) pause();
+    else startMotion(false);
+  }
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    if (state.view === "session" && state.route === "breath") {
+      cancelAnimationFrame(frame);
+      lastTime = null;
+    } else pause();
+  } else if (state.view === "session" && state.route === "breath")
+    startBreath();
+});
+window.addEventListener("pagehide", () => {
+  stopMotion();
+  if (audioContext) audioContext.close().catch(() => {});
+  audioContext = null;
+});
+render(false);

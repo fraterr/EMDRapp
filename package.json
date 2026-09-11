@@ -1,0 +1,9 @@
+{
+ "name":"emdr-practical-humanism",
+ "version":"2.0.0",
+ "private":true,
+ "description":"Client-side EMDR support interface",
+ "scripts":{"start":"node server.cjs","check":"node --check app.js && node --check server.cjs","test":"node --test tests/app.test.cjs","format":"prettier --write index.html styles.css app.js server.cjs tests/app.test.cjs"},
+ "devDependencies":{"playwright":"^1.56.1","prettier":"3.6.2"}
+}
+

@@ -1,0 +1,970 @@
+{
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "failed_sources": [],
+  "nodes": [
+    {
+      "id": "app",
+      "label": "app.js",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "app_playtherapeuticchime",
+      "label": "playTherapeuticChime()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L90",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_showscreen",
+      "label": "showScreen()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L126",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_startbreathingguide",
+      "label": "startBreathingGuide()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L293",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_stopbreathingguide",
+      "label": "stopBreathingGuide()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L311",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_startdeepbreathguide",
+      "label": "startDeepBreathGuide()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L320",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_stopdeepbreathguide",
+      "label": "stopDeepBreathGuide()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L340",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_setupsudsbuttons",
+      "label": "setupSudsButtons()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L348",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_selecttappingpoint",
+      "label": "selectTappingPoint()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L415",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_startefttapping",
+      "label": "startEftTapping()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L449",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_stopefttapping",
+      "label": "stopEftTapping()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L454",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_inittappinglistlisteners",
+      "label": "initTappingListListeners()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L458",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpparticle",
+      "label": "NlpParticle",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L476",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpparticle_constructor",
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L477",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpparticle_update",
+      "label": ".update()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L489",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpparticle_draw",
+      "label": ".draw()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L494",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpstar",
+      "label": "NlpStar",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L507",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpstar_constructor",
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L508",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpstar_update",
+      "label": ".update()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L516",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_nlpstar_draw",
+      "label": ".draw()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L522",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_setupnlpcanvas",
+      "label": "setupNlpCanvas()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L537",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_animatenlpcanvas",
+      "label": "animateNlpCanvas()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L561",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_initnlplisteners",
+      "label": "initNlpListeners()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L589",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_triggernlperasure",
+      "label": "triggerNlpErasure()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L646",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_capturesensorydata",
+      "label": "captureSensoryData()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L679",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_resetsensoryinputs",
+      "label": "resetSensoryInputs()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L687",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_startbilateralstimulation",
+      "label": "startBilateralStimulation()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L697",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_beginstimulationanimation",
+      "label": "beginStimulationAnimation()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L763",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_beginstimulationanimation_updateframe",
+      "label": "updateFrame()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L789",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_stopbilateralstimulation",
+      "label": "stopBilateralStimulation()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L882",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_savesessiontohistory",
+      "label": "saveSessionToHistory()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L910",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_renderhistorylist",
+      "label": "renderHistoryList()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L939",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "app_renderhistorychart",
+      "label": "renderHistoryChart()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L1001",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "readme",
+      "label": "README.md",
+      "file_type": "document",
+      "node_kind": "page",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "readme_emdr_therapy_guide",
+      "label": "EMDR Therapy Guide",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "readme_try_it_live",
+      "label": "🔗 Try it Live",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "README.md",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "readme_what_it_does",
+      "label": "What it does",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "README.md",
+      "source_location": "L10",
+      "_origin": "ast"
+    }
+  ],
+  "links": [
+    {
+      "source": "app",
+      "target": "app_playtherapeuticchime",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L90",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_showscreen",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L126",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_startbreathingguide",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L293",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_stopbreathingguide",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L311",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_startdeepbreathguide",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L320",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_stopdeepbreathguide",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L340",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_setupsudsbuttons",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L348",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_selecttappingpoint",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L415",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_startefttapping",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L449",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_stopefttapping",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L454",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_inittappinglistlisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L458",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_nlpparticle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L476",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_nlpparticle",
+      "target": "app_nlpparticle_constructor",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L477",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_nlpparticle",
+      "target": "app_nlpparticle_update",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L489",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_nlpparticle",
+      "target": "app_nlpparticle_draw",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L494",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_nlpstar",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L507",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_nlpstar",
+      "target": "app_nlpstar_constructor",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L508",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_nlpstar",
+      "target": "app_nlpstar_update",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L516",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_nlpstar",
+      "target": "app_nlpstar_draw",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L522",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_setupnlpcanvas",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L537",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_animatenlpcanvas",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L561",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_initnlplisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L589",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_triggernlperasure",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L646",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_capturesensorydata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L679",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_resetsensoryinputs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L687",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_startbilateralstimulation",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L697",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_beginstimulationanimation",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L763",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_beginstimulationanimation",
+      "target": "app_beginstimulationanimation_updateframe",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L789",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_stopbilateralstimulation",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L882",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_savesessiontohistory",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L910",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_renderhistorylist",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L939",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app",
+      "target": "app_renderhistorychart",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L1001",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_startbreathingguide",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L172",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_stopbreathingguide",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L184",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_startefttapping",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L199",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_stopefttapping",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L201",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_setupnlpcanvas",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L252",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_startdeepbreathguide",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L261",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_stopdeepbreathguide",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L263",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_savesessiontohistory",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L286",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_showscreen",
+      "target": "app_renderhistorylist",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L287",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_startefttapping",
+      "target": "app_selecttappingpoint",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L450",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_inittappinglistlisteners",
+      "target": "app_selecttappingpoint",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L462",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_setupnlpcanvas",
+      "target": "app_nlpstar",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L549",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_setupnlpcanvas",
+      "target": "app_animatenlpcanvas",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L558",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_animatenlpcanvas",
+      "target": "app_nlpstar_update",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L571",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_animatenlpcanvas",
+      "target": "app_nlpstar_draw",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L572",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_initnlplisteners",
+      "target": "app_triggernlperasure",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L621",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_triggernlperasure",
+      "target": "app_playtherapeuticchime",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L654",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_triggernlperasure",
+      "target": "app_nlpparticle",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L657",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_startbilateralstimulation",
+      "target": "app_beginstimulationanimation",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L738",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_beginstimulationanimation",
+      "target": "app_playtherapeuticchime",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L765",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_beginstimulationanimation",
+      "target": "app_beginstimulationanimation_updateframe",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "app.js",
+      "source_location": "L879",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_beginstimulationanimation_updateframe",
+      "target": "app_stopbilateralstimulation",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L802",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_stopbilateralstimulation",
+      "target": "app_playtherapeuticchime",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L891",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_stopbilateralstimulation",
+      "target": "app_showscreen",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L895",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "app_renderhistorylist",
+      "target": "app_renderhistorychart",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app.js",
+      "source_location": "L955",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "readme",
+      "target": "readme_emdr_therapy_guide",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "readme_emdr_therapy_guide",
+      "target": "readme_try_it_live",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "readme_emdr_therapy_guide",
+      "target": "readme_what_it_does",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    }
+  ],
+  "directed": false
+}
