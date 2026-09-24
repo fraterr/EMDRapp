@@ -1369,19 +1369,6 @@ dialog .button {
     margin-bottom: 30px;
   }
 }
-.butterfly-guide {
-  margin: 22px auto 0;
-  max-width: 680px;
-  font-size: 14px;
-  color: var(--muted);
-}
-.butterfly-guide summary {
-  cursor: pointer;
-}
-.butterfly-guide p {
-  margin-top: 12px;
-}
-
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #10131c;
@@ -1447,4 +1434,540 @@ dialog .button {
 }
 .brand-symbol {
   flex-shrink: 0;
+}
+/* Visual exercise guides */
+:root {
+  --art-teal: #277f75;
+  --art-mint: #bbded4;
+  --art-purple: #cbc5f3;
+  --art-skin: #f0ddd2;
+  --art-outline: #55566f;
+}
+:root[data-theme="dark"] {
+  --art-teal: #93d9c9;
+  --art-mint: #44867c;
+  --art-purple: #8e82ce;
+  --art-skin: #baa799;
+  --art-outline: #d4cee8;
+}
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.section-heading h2 {
+  margin: 0;
+  font-size: 25px;
+}
+.section-heading .eyebrow {
+  margin-bottom: 7px;
+}
+.section-heading p {
+  margin: 0;
+  font-size: 14px;
+}
+.visual-journey {
+  margin: 34px 0;
+}
+.exercise-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.exercise-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.exercise-picture {
+  height: 156px;
+  background: var(--soft);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.exercise-hug .exercise-picture {
+  background: color-mix(in srgb, var(--art-teal) 10%, var(--surface));
+}
+.exercise-breath .exercise-picture {
+  background: color-mix(in srgb, var(--art-teal) 6%, var(--surface));
+  color: var(--art-teal);
+}
+.exercise-art {
+  width: 170px;
+  height: 146px;
+}
+.art-fill {
+  fill: currentColor;
+  stroke: none;
+}
+.exercise-copy {
+  padding: 20px;
+  position: relative;
+}
+.exercise-copy > span {
+  float: right;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-left: 10px;
+}
+.exercise-copy h3 {
+  margin: 0 0 7px;
+}
+.exercise-copy p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+.hug-art {
+  width: 100%;
+  height: auto;
+  max-width: 330px;
+}
+.exercise-picture .hug-art {
+  width: 175px;
+  height: 156px;
+}
+.art-halo {
+  fill: var(--soft);
+}
+.art-body {
+  fill: var(--surface);
+  stroke: var(--selection-line);
+  stroke-width: 2;
+}
+.art-head {
+  fill: var(--art-skin);
+}
+.art-line {
+  fill: none;
+  stroke: var(--art-outline);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.hug-arm {
+  fill: none;
+  stroke-width: 27;
+  stroke-linecap: round;
+}
+.arm-left {
+  stroke: var(--art-purple);
+}
+.arm-right {
+  stroke: var(--art-mint);
+}
+.hand-left {
+  fill: var(--art-purple);
+  color: var(--accent);
+}
+.hand-right {
+  fill: var(--art-mint);
+  color: var(--art-teal);
+}
+.finger-line {
+  fill: none;
+  stroke: var(--art-outline);
+  stroke-width: 1.5;
+  opacity: 0.65;
+  stroke-linecap: round;
+}
+.tap-ripple {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  opacity: 0;
+}
+.hand-marker {
+  fill: var(--muted);
+  font:
+    600 13px "Segoe UI",
+    sans-serif;
+}
+.hug-hand {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 250ms ease;
+}
+[data-side="left"] .hand-left,
+[data-side="right"] .hand-right {
+  transform: scale(1.045);
+}
+[data-side="left"] .hand-left .tap-ripple,
+[data-side="right"] .hand-right .tap-ripple {
+  opacity: 0.65;
+}
+.hug-guide {
+  text-align: center;
+}
+.hand-cues {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.hand-cues span {
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 6px 15px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface);
+}
+[data-side="left"] .cue-left {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--soft);
+}
+[data-side="right"] .cue-right {
+  color: var(--art-teal);
+  border-color: var(--art-teal);
+  background: color-mix(in srgb, var(--art-teal) 12%, var(--surface));
+}
+.hug-cue {
+  color: var(--ink);
+  font-size: 14px;
+  margin: 14px 0 0;
+  min-height: 23px;
+}
+.butterfly-card {
+  padding: 30px;
+}
+.butterfly-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 36px;
+  align-items: center;
+}
+.butterfly-demo {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px 16px;
+  text-align: center;
+}
+.butterfly-demo .button {
+  margin: 20px auto 12px;
+}
+.butterfly-demo > .hint {
+  margin: 0;
+  font-size: 12px;
+}
+.butterfly-instructions h2 {
+  font-size: 29px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.illustrated-steps {
+  list-style: none;
+  padding: 0;
+  margin: 26px 0;
+}
+.illustrated-steps li {
+  display: flex;
+  gap: 14px;
+  margin: 20px 0;
+}
+.illustrated-steps li > span {
+  font-size: 11px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.illustrated-steps h3 {
+  margin: 2px 0 6px;
+}
+.illustrated-steps p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+.butterfly-instructions .switch-row {
+  gap: 12px;
+}
+.live-hug {
+  max-width: 680px;
+  margin: 22px auto 0;
+  padding: 0 22px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.live-hug .switch-row {
+  padding: 18px 0;
+  border-bottom: 0;
+  gap: 16px;
+}
+.live-hug .hug-guide {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  grid-template-rows: 1fr 1fr;
+  align-items: center;
+  max-width: 430px;
+  margin: 0 auto;
+}
+.live-hug .hug-art {
+  grid-row: 1 / 3;
+  max-height: 135px;
+}
+.live-hug .hand-cues {
+  align-self: end;
+  gap: 8px;
+}
+.live-hug .hand-cues span {
+  padding: 5px 10px;
+}
+.live-hug .hug-cue {
+  align-self: start;
+  margin-top: 10px;
+}
+.stim-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 22px;
+  margin-top: 18px;
+}
+.stim-bottom .button {
+  font-size: 13px;
+  padding: 9px 16px;
+}
+.stim-stage:fullscreen {
+  overflow-y: auto;
+}
+.stim-stage:fullscreen .tracker {
+  height: max(180px, calc(100dvh - 500px));
+}
+.stim-stage:fullscreen #stim-hint,
+.stim-stage:fullscreen .stim-bottom {
+  display: none;
+}
+.prepare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.prepare-grid article {
+  text-align: center;
+}
+.prepare-grid .exercise-art {
+  width: 100%;
+  max-width: 180px;
+  height: 140px;
+  color: var(--accent);
+  border-radius: 18px;
+  background: var(--soft);
+  margin: 0 auto 22px;
+}
+.prepare-grid h2 {
+  font-size: 17px;
+}
+.prepare-grid p {
+  font-size: 14px;
+}
+.feeling-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  padding: 20px 0 35px;
+}
+.feeling-visual svg {
+  width: 100px;
+  height: 100px;
+}
+.feeling-visual circle {
+  fill: var(--soft);
+}
+.feeling-visual path {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  fill: none;
+}
+.feeling-visual .eyebrow {
+  margin-bottom: 4px;
+}
+.feeling-visual strong {
+  display: block;
+  font-size: 25px;
+  font-weight: 500;
+}
+.feeling-visual small {
+  font-size: 15px;
+  color: var(--muted);
+}
+.feeling-meter {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+}
+.feeling-meter i {
+  width: 12px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+}
+.feeling-meter i.filled {
+  background: var(--accent);
+}
+.reflection-art {
+  padding: 20px;
+  background: var(--bg);
+  border-radius: 18px;
+  margin-bottom: 25px;
+}
+.scene-window {
+  height: 160px;
+  display: grid;
+  place-items: center;
+}
+.scene-window svg {
+  width: min(100%, 300px);
+  height: 160px;
+}
+.reflection-phase-1 .scene-window svg {
+  filter: grayscale(1);
+}
+.reflection-phase-2 .scene-window svg {
+  filter: grayscale(1);
+  transform: scale(0.4);
+}
+.reflection-phase-3 .scene-window svg {
+  opacity: 0.25;
+}
+.reflection-art > span {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+@media (max-width: 1100px) {
+  .butterfly-layout {
+    gap: 24px;
+  }
+  .butterfly-card {
+    padding: 24px;
+  }
+  .butterfly-instructions h2 {
+    font-size: 24px;
+  }
+  .hand-cues span {
+    padding: 6px 10px;
+  }
+}
+@media (max-width: 680px) {
+  .section-heading {
+    display: block;
+  }
+  .section-heading p {
+    margin-top: 8px;
+  }
+  .exercise-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .exercise-card {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+  }
+  .exercise-picture {
+    height: 100%;
+    min-height: 126px;
+  }
+  .exercise-picture .exercise-art,
+  .exercise-picture .hug-art {
+    width: 105px;
+    height: 105px;
+  }
+  .exercise-copy {
+    padding: 17px 14px;
+  }
+  .exercise-copy > span {
+    display: none;
+  }
+  .butterfly-layout {
+    grid-template-columns: 1fr;
+  }
+  .butterfly-demo .hug-art {
+    max-width: 245px;
+  }
+  .butterfly-card {
+    padding: 20px;
+  }
+  .butterfly-instructions h2 br {
+    display: none;
+  }
+  .prepare-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .prepare-grid article {
+    text-align: left;
+    display: grid;
+    grid-template-columns: 85px 1fr;
+    column-gap: 16px;
+  }
+  .prepare-grid .exercise-art {
+    grid-row: 1/3;
+    height: 90px;
+    margin: 0;
+  }
+  .prepare-grid h2 {
+    margin: 5px 0;
+  }
+  .prepare-grid p {
+    margin: 0;
+  }
+  .feeling-visual {
+    gap: 16px;
+  }
+  .feeling-visual svg {
+    width: 75px;
+    height: 75px;
+  }
+  .feeling-visual strong {
+    font-size: 20px;
+  }
+  .live-hug {
+    padding: 0 14px 16px;
+  }
+  .live-hug .hug-guide {
+    grid-template-columns: 100px 1fr;
+  }
+  .live-hug .hand-cues {
+    gap: 5px;
+  }
+  .live-hug .hand-cues span {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  .live-hug .hug-cue {
+    font-size: 12px;
+  }
+}
+@media (max-width: 380px) {
+  .live-hug .hug-guide {
+    display: block;
+  }
+  .live-hug .hug-art {
+    max-width: 130px;
+    margin: 0 auto;
+  }
+  .hand-cues {
+    gap: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hug-hand {
+    transform: none !important;
+  }
 }

@@ -21,15 +21,16 @@ L’app è statica: i file pubblici possono anche essere ospitati su GitHub Page
 - Preparazione, valutazione del disagio da 1 a 10, stimolazione, respirazione e riepilogo.
 - Anteprima di 10 secondi, durata del set di 30/60/90 secondi, cinque velocità, ritmo costante o variabile, segnale audio opzionale.
 - Pausa/ripresa, schermo intero ove supportato, arresto automatico quando la pagina diventa nascosta. Nessun avvio automatico del movimento.
-- Note sensoriali facoltative e navigabili, nove punti di tapping illustrati, sequenza 9 Gamut e visualizzazione facoltativa. Butterfly Hug accessibile dalle istruzioni della stimolazione.
+- Note sensoriali facoltative e navigabili, nove punti di tapping illustrati, sequenza 9 Gamut e visualizzazione facoltativa. Butterfly Hug con passaggio dedicato, illustrazione delle braccia incrociate, prova del ritmo e guida alternata durante il set. La prova non consuma il tempo del set; la guida può essere disattivata.
+- Panoramica illustrata del percorso, preparazione con pittogrammi, indicatore visivo del disagio e scene per la visualizzazione.
 - Diario degli ultimi 20 set con grafico, tabella, cancellazione e compatibilità con i record precedenti.
 - Layout responsive, etichette accessibili, navigazione da tastiera, focus gestito e rispetto di `prefers-reduced-motion` per la respirazione. Il movimento essenziale del punto rimane disponibile solo su avvio esplicito.
 
-Il progetto mantiene gli esercizi complementari della versione originale, ma li distingue dal trattamento EMDR professionale. Le valutazioni sono soggettive e non attestano un risultato clinico. I testi non promettono di cancellare ricordi. La ricostruzione non costituisce una validazione clinica del percorso.
+Il progetto mantiene gli esercizi complementari della versione originale e li presenta come facoltativi. Le valutazioni sono soggettive e non attestano un risultato clinico. I testi non promettono di cancellare ricordi. La ricostruzione non costituisce una validazione clinica del percorso.
 
 ## Privacy
 
-Nessun account, analytics, font esterno o chiamata di rete dell’app verso servizi terzi. I link di approfondimento e sostegno aprono siti esterni solo su richiesta dell’utente.
+Nessun account, analytics, font esterno o chiamata di rete dell’app verso servizi terzi. I link di sostegno aprono siti esterni solo su richiesta dell’utente.
 
 Le note sensoriali restano nella memoria della pagina e vengono scartate alla conclusione o alla chiusura. Il diario usa la chiave preesistente `emdr_session_history` in `localStorage`, conserva solo data e punteggi e non è cifrato. Le descrizioni eventualmente salvate dalla versione precedente vengono eliminate al prossimo salvataggio del diario. Il salvataggio non disponibile viene segnalato; i dati restano utilizzabili in memoria durante la pagina corrente.
 
@@ -60,3 +61,7 @@ Le dipendenze sono solo di sviluppo: Playwright per i test e Prettier per la for
 ![Desktop](docs/desktop.png)
 
 [Anteprima mobile](docs/mobile.png)
+
+## Aggiornamento del 24 settembre 2026
+
+Rimossi i riferimenti al terapista dai testi dell’app. Ripristinato il Butterfly Hug come passaggio illustrato prima della stimolazione, con pausa tramite pulsante, Esc e cambio scheda. Aggiunta una guida alternata durante il set, indipendente dalla velocità del punto. Il ritorno alle istruzioni conserva il tempo trascorso. Verifiche: 12 test browser, inclusi entrambi i temi, viewport da 320 a 1440 px e riduzione del movimento.

@@ -95,6 +95,7 @@ test("Timer, pause, navigation, preview isolation, completion and local save", a
   await p.locator('[data-action="duration"][data-value="30"]').click();
   await start(p);
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await click(p, "toggle-stim");
   await p.clock.runFor(2200);
   assert.match(await p.locator("#toggle-stim").innerText(), /Pause/);
@@ -150,6 +151,7 @@ test("Advanced notes, all nine images, Gamut and optional visualization", async 
   await click(p, "gamut");
   assert.equal(await p.locator('[data-gamut="0"]').isChecked(), true);
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await click(p, "end-set");
   await click(p, "reflection");
   for (let i = 0; i < 3; i++) await click(p, "reflect-next");
@@ -173,11 +175,13 @@ test("Repeat saves each set once, baseline changes, early exit keeps saved sets"
   const p = await setup(t);
   await start(p, 7);
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await click(p, "end-set");
   await summary(p, 5);
   await click(p, "repeat");
   assert.equal((await saved(p)).length, 1);
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await click(p, "end-set");
   await summary(p, 8);
   assert.match(await p.locator(".summary-point").first().innerText(), /5/);
@@ -213,6 +217,7 @@ test("Untrusted legacy history is escaped, migrated and capped to 20", async (t)
   await click(p, "home");
   await start(p);
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await click(p, "end-set");
   await summary(p);
   await click(p, "finish");
@@ -237,6 +242,7 @@ test("Malformed storage and storage-write failure are visible and nonblocking", 
   await p.locator('[data-action="rate"][data-value="4"]').click();
   await click(p, "rated");
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await click(p, "end-set");
   await summary(p, 4);
   await click(p, "finish");
@@ -251,6 +257,7 @@ test("Keyboard, hidden-page pause and reduced motion", async (t) => {
   await p.clock.install();
   await start(p);
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await p.locator("main").focus();
   await p.keyboard.press("Space");
   await p.clock.runFor(1200);
@@ -329,6 +336,7 @@ test("Theme follows the system, persists a choice, and keeps a running set intac
   await p.clock.install();
   await start(p);
   await click(p, "stimulation");
+  await click(p, "begin-set");
   await click(p, "toggle-stim");
   await p.clock.runFor(2200);
   const before = await p.locator("#timer").innerText();
@@ -363,4 +371,140 @@ test("Theme works when local storage is blocked, including keyboard controls", a
   await p.locator("#theme-toggle").focus();
   await p.keyboard.press("Space");
   assert.equal(await p.locator("html").getAttribute("data-theme"), "light");
+});
+
+test("Butterfly Hug practice, pause, review and live guidance preserve the set", async (t) => {
+  const p = await setup(t);
+  await p.clock.install();
+  await p.locator('[data-action="duration"][data-value="30"]').click();
+  await start(p);
+  await click(p, "gamut");
+  await click(p, "stimulation");
+  assert.match(await p.locator("h1").innerText(), /hands find a rhythm/);
+  assert.equal(await p.locator(".illustrated-steps li").count(), 3);
+  await click(p, "hug-demo");
+  await p.clock.runFor(150);
+  assert.equal(await p.locator("[data-hug]").getAttribute("data-side"), "left");
+  await p.clock.runFor(850);
+  assert.equal(
+    await p.locator("[data-hug]").getAttribute("data-side"),
+    "right",
+  );
+  await p.locator("main").focus();
+  await p.keyboard.press("Escape");
+  assert.match(await p.locator("#hug-demo-button").innerText(), /Resume/);
+  assert.equal(await p.locator("[data-hug]").getAttribute("data-side"), "rest");
+  await p.clock.fastForward(40000);
+  await click(p, "begin-set");
+  assert.equal(await p.locator("#timer").innerText(), "00:30");
+  await click(p, "toggle-stim");
+  await p.clock.runFor(1200);
+  assert.equal(
+    await p.locator("[data-hug]").getAttribute("data-side"),
+    "right",
+  );
+  await p.locator("#hug-enabled").uncheck();
+  assert.equal(await p.locator("#live-hug-guide").isVisible(), false);
+  await p.clock.runFor(1000);
+  const time = await p.locator("#timer").innerText();
+  await click(p, "review-hug");
+  assert.equal(await p.locator("#hug-enabled").isChecked(), false);
+  await click(p, "hug-demo");
+  await p.clock.runFor(100);
+  await p.evaluate(() => {
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      value: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  assert.equal(await p.locator("[data-hug]").getAttribute("data-side"), "rest");
+  assert.match(await p.locator("#hug-demo-button").innerText(), /Resume/);
+  await p.evaluate(() => {
+    delete document.hidden;
+  });
+  await p.locator("#hug-enabled").check();
+  await click(p, "begin-set");
+  assert.equal(await p.locator("#timer").innerText(), time);
+  await click(p, "toggle-stim");
+  await p.clock.runFor(100);
+  await p.clock.fastForward(31000);
+  await p.locator("#breath-label").waitFor();
+  assert.equal(await p.locator("[data-hug]").count(), 0);
+  await summary(p);
+  await click(p, "finish");
+  assert.equal((await saved(p)).length, 1);
+});
+
+test("Illustrated steps fit mobile and dark mode, with reduced motion support", async (t) => {
+  const p = await setup(t);
+  await p.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+  await p.waitForFunction(
+    () => document.documentElement.dataset.theme === "light",
+  );
+  await click(p, "start");
+  await p.screenshot({ path: "docs/preparation.png", fullPage: true });
+  await click(p, "before");
+  await p.locator('[data-action="rate"][data-value="7"]').click();
+  assert.match(await p.locator("#feeling-visual").innerText(), /7/);
+  assert.equal(await p.locator(".feeling-meter .filled").count(), 7);
+  await p.screenshot({ path: "docs/check-in.png", fullPage: true });
+  await click(p, "rated");
+  await click(p, "stimulation");
+  for (const theme of ["light", "dark"]) {
+    if (theme === "dark") await click(p, "theme");
+    for (const width of [1440, 768, 390, 320]) {
+      await p.setViewportSize({ width, height: 900 });
+      assert.equal(
+        await p.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+        `${theme} butterfly at ${width}`,
+      );
+    }
+    await p.setViewportSize({ width: 1440, height: 1000 });
+    await p.screenshot({ path: `docs/butterfly-${theme}.png`, fullPage: true });
+  }
+  await p.setViewportSize({ width: 390, height: 844 });
+  await p.screenshot({ path: "docs/butterfly-mobile.png", fullPage: true });
+  await p.clock.install();
+  await click(p, "hug-demo");
+  await p.clock.runFor(100);
+  assert.equal(
+    await p
+      .locator(".hand-left")
+      .evaluate((e) => getComputedStyle(e).transform),
+    "none",
+  );
+  await click(p, "begin-set");
+  for (const width of [390, 320]) {
+    await p.setViewportSize({ width, height: 844 });
+    assert.equal(
+      await p.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+      false,
+      `live guide at ${width}`,
+    );
+  }
+  await p.screenshot({ path: "docs/stimulation-mobile.png", fullPage: true });
+  await click(p, "fullscreen");
+  await p.waitForFunction(() => document.fullscreenElement !== null);
+  const guideBox = await p.locator("#live-hug-guide").boundingBox();
+  const viewportHeight = await p.evaluate(() => innerHeight);
+  await p.screenshot({ path: "docs/fullscreen-mobile.png", fullPage: true });
+  assert.ok(
+    guideBox.y + guideBox.height <= viewportHeight,
+    `fullscreen keeps the hand guide visible: ${JSON.stringify(guideBox)}, viewport ${viewportHeight}`,
+  );
+  await click(p, "fullscreen");
+  await p.waitForFunction(() => document.fullscreenElement === null);
+  await click(p, "end-set");
+  await click(p, "reflection");
+  await p.screenshot({ path: "docs/reflection-mobile.png", fullPage: true });
+  await click(p, "guide");
+  assert.doesNotMatch(
+    await p.locator("main").innerText(),
+    /therapist|qualified professional|agreed plan/i,
+  );
+  assert.match(await p.locator("main").innerText(), /Butterfly Hug/);
 });
